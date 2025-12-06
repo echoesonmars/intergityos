@@ -1,101 +1,93 @@
-import Image from "next/image";
+'use client';
+
+import Link from 'next/link';
+import KazakhstanMap from './components/KazakhstanMap';
+import { InteractiveHoverButton } from '@/components/ui/interactive-hover-button';
+import FlipText from './components/FlipText';
+import { TextAnimate } from '@/components/ui/text-animate';
+import { BlurFade } from '@/components/ui/blur-fade';
 
 export default function Home() {
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+    <main className="min-h-screen flex items-center px-4 sm:px-6 lg:px-8" style={{ background: 'var(--color-white)' }}>
+      <div className="max-w-4xl w-full mx-auto py-6 lg:py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 items-center">
+          {/* Left Column - Text Content */}
+          <div className="space-y-3 lg:space-y-4 order-2 lg:order-1">
+            {/* Logo */}
+            <BlurFade delay={0.1}>
+              <TextAnimate
+                as="h1"
+                className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight"
+                style={{ fontFamily: 'var(--font-jost)', color: 'var(--color-dark-blue)' }}
+                by="character"
+                animation="blurInUp"
+              >
+                IntegrityOS
+              </TextAnimate>
+            </BlurFade>
+            
+            {/* Main Heading */}
+            <BlurFade delay={0.2}>
+              <TextAnimate
+                as="p"
+                className="text-xl sm:text-2xl lg:text-3xl font-semibold leading-tight"
+                style={{ fontFamily: 'var(--font-geist)', color: 'var(--color-black)' }}
+                by="word"
+                animation="blurInUp"
+              >
+                Надежный контроль за магистральными трубопроводами.
+              </TextAnimate>
+            </BlurFade>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+            {/* Description */}
+            <BlurFade delay={0.3}>
+              <p className="text-base sm:text-lg leading-relaxed" style={{ fontFamily: 'var(--font-geist)', color: 'var(--color-blue)' }}>
+                <FlipText />
+              </p>
+            </BlurFade>
+
+            {/* CTA Button */}
+            <BlurFade delay={0.4}>
+              <div className="pt-1">
+                <Link href="/app">
+                  <InteractiveHoverButton
+                    style={{ 
+                      fontFamily: 'var(--font-geist)',
+                      backgroundColor: 'var(--color-dark-blue)',
+                      color: 'var(--color-white)',
+                      borderColor: 'var(--color-dark-blue)'
+                    }}
+                  >
+                    Начать бесплатно
+                  </InteractiveHoverButton>
+                </Link>
+              </div>
+            </BlurFade>
+          </div>
+
+          {/* Right Column - Map */}
+          <BlurFade delay={0.2} direction="left">
+            <div className="order-1 lg:order-2 flex items-center justify-center">
+              <div className="w-full">
+                <div className="macos-window">
+                  <div className="macos-titlebar">
+                    <div className="macos-buttons">
+                      <span className="macos-button macos-button-close"></span>
+                      <span className="macos-button macos-button-minimize"></span>
+                      <span className="macos-button macos-button-maximize"></span>
+                    </div>
+                    <div className="macos-title">Карта Казахстана</div>
+                  </div>
+                  <div className="macos-content">
+                    <KazakhstanMap />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </BlurFade>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+      </div>
+    </main>
   );
 }

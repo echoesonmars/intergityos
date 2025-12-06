@@ -2,26 +2,171 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  letter-spacing: -0.07em;
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist), sans-serif;
+  letter-spacing: -0.07em;
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+  
+  .cta-button {
+    background-color: var(--color-dark-blue);
+  }
+  
+  .cta-button:hover {
+    background-color: var(--color-blue);
+    transform: scale(1.02);
+    box-shadow: 0 20px 40px rgba(33, 52, 72, 0.3);
+  }
+  
+  /* macOS Window Style */
+  .macos-window {
+    background: var(--color-white);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(33, 52, 72, 0.2), 0 0 0 1px rgba(33, 52, 72, 0.1);
+  }
+  
+  .macos-titlebar {
+    background: linear-gradient(to bottom, #f5f5f5, #e8e8e8);
+    height: 40px;
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    gap: 12px;
+  }
+  
+  .macos-buttons {
+    display: flex;
+    gap: 8px;
+  }
+  
+  .macos-button {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+  
+  .macos-button-close {
+    background: #ff5f57;
+  }
+  
+  .macos-button-minimize {
+    background: #ffbd2e;
+  }
+  
+  .macos-button-maximize {
+    background: #28ca42;
+  }
+  
+  .macos-title {
+    flex: 1;
+    text-align: center;
+    font-size: 13px;
+    color: #333;
+    font-weight: 500;
+    letter-spacing: -0.07em;
+  }
+  
+  .macos-content {
+    padding: 0;
+    background: transparent;
+    min-height: 500px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+
+
+@layer base {
+  :root {
+    /* Brand Colors */
+    --color-dark-blue: #213448;
+    --color-blue: #547792;
+    --color-light-blue: #94B4C1;
+    --color-cream: #ECEFCA;
+    --color-white: #ffffff;
+    --color-black: #000000;
+    
+    /* Semantic Colors */
+    --background: var(--color-white);
+    --foreground: var(--color-black);
+    --card: var(--color-white);
+    --card-foreground: var(--color-black);
+    --popover: var(--color-white);
+    --popover-foreground: var(--color-black);
+    --primary: var(--color-dark-blue);
+    --primary-foreground: var(--color-white);
+    --secondary: var(--color-light-blue);
+    --secondary-foreground: var(--color-black);
+    --muted: var(--color-light-blue);
+    --muted-foreground: var(--color-blue);
+    --accent: var(--color-blue);
+    --accent-foreground: var(--color-white);
+    --destructive: #dc2626;
+    --destructive-foreground: var(--color-white);
+    --border: var(--color-light-blue);
+    --input: var(--color-light-blue);
+    --ring: var(--color-dark-blue);
+    --radius: 0.5rem;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+  .dark {
+    --background: var(--color-dark-blue);
+    --foreground: var(--color-white);
+    --card: var(--color-dark-blue);
+    --card-foreground: var(--color-white);
+    --popover: var(--color-dark-blue);
+    --popover-foreground: var(--color-white);
+    --primary: var(--color-blue);
+    --primary-foreground: var(--color-white);
+    --secondary: var(--color-blue);
+    --secondary-foreground: var(--color-white);
+    --muted: var(--color-blue);
+    --muted-foreground: var(--color-light-blue);
+    --accent: var(--color-light-blue);
+    --accent-foreground: var(--color-black);
+    --destructive: #dc2626;
+    --destructive-foreground: var(--color-white);
+    --border: var(--color-blue);
+    --input: var(--color-blue);
+    --ring: var(--color-light-blue);
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
   }
 }
