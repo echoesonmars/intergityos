@@ -33,17 +33,67 @@ export function Select({ value, onChange, options, placeholder = 'Выберит
       }
     };
 
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-      // Обновляем позицию при открытии
+    const updatePosition = () => {
       if (buttonRef.current) {
         const rect = buttonRef.current.getBoundingClientRect();
+        const viewportHeight = window.innerHeight;
+        const viewportWidth = window.innerWidth;
+        const dropdownHeight = 240; // Примерная высота dropdown
+        const spaceBelow = viewportHeight - rect.bottom;
+        const spaceAbove = rect.top;
+        
+        // Определяем, где больше места - сверху или снизу
+        const showBelow = spaceBelow >= dropdownHeight || spaceBelow > spaceAbove;
+        
+        let top: number;
+        if (showBelow) {
+          // Показываем снизу
+          top = rect.bottom + window.scrollY + 8;
+        } else {
+          // Показываем сверху
+          top = rect.top + window.scrollY - dropdownHeight - 8;
+        }
+        
+        // Проверяем горизонтальные границы
+        let left = rect.left + window.scrollX;
+        const dropdownWidth = rect.width;
+        if (left + dropdownWidth > viewportWidth + window.scrollX) {
+          left = viewportWidth + window.scrollX - dropdownWidth - 10;
+        }
+        if (left < window.scrollX) {
+          left = window.scrollX + 10;
+        }
+        
         setPosition({
-          top: rect.bottom + window.scrollY + 8,
-          left: rect.left + window.scrollX,
+          top,
+          left,
           width: rect.width,
         });
       }
+    };
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      updatePosition();
+      
+      // Закрываем dropdown при скролле (стандартное поведение)
+      const handleScroll = () => {
+        setIsOpen(false);
+      };
+      
+      // Обновляем позицию только при изменении размера окна
+      const handleResize = () => {
+        updatePosition();
+      };
+      
+      window.addEventListener('scroll', handleScroll, true);
+      window.addEventListener('resize', handleResize);
+      
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+        window.removeEventListener('scroll', handleScroll, true);
+        window.removeEventListener('resize', handleResize);
+      };
     }
 
     return () => {
@@ -51,32 +101,10 @@ export function Select({ value, onChange, options, placeholder = 'Выберит
     };
   }, [isOpen]);
 
-  useEffect(() => {
-    const handleScroll = () => {
-      if (isOpen && buttonRef.current) {
-        const rect = buttonRef.current.getBoundingClientRect();
-        setPosition({
-          top: rect.bottom + window.scrollY + 8,
-          left: rect.left + window.scrollX,
-          width: rect.width,
-        });
-      }
-    };
-
-    if (isOpen) {
-      window.addEventListener('scroll', handleScroll, true);
-      window.addEventListener('resize', handleScroll);
-    }
-
-    return () => {
-      window.removeEventListener('scroll', handleScroll, true);
-      window.removeEventListener('resize', handleScroll);
-    };
-  }, [isOpen]);
 
   const dropdownContent = (
     <AnimatePresence>
-      {isOpen && (
+      {isOpen && position.width > 0 && (
         <motion.div
           initial={{ opacity: 0, y: -10, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -86,7 +114,8 @@ export function Select({ value, onChange, options, placeholder = 'Выберит
           style={{
             top: `${position.top}px`,
             left: `${position.left}px`,
-            width: `${position.width}px`,
+            width: `${Math.max(position.width, 200)}px`,
+            maxWidth: '90vw',
             zIndex: 9999,
             borderColor: 'var(--color-light-blue)',
             background: 'var(--color-white)',

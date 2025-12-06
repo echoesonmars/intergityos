@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { useEffect, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -19,6 +20,7 @@ const MapContainer = dynamic(() => import('react-leaflet').then((mod) => mod.Map
 const TileLayer = dynamic(() => import('react-leaflet').then((mod) => mod.TileLayer), { ssr: false });
 const Marker = dynamic(() => import('react-leaflet').then((mod) => mod.Marker), { ssr: false });
 const Popup = dynamic(() => import('react-leaflet').then((mod) => mod.Popup), { ssr: false });
+const ZoomControl = dynamic(() => import('react-leaflet').then((mod) => mod.ZoomControl), { ssr: false });
 
 // Mock данные объектов
 const mockObjects = [
@@ -27,6 +29,9 @@ const mockObjects = [
   { id: 3, name: 'Участок трубы №45', lat: 51.16, lon: 71.47, pipeline: 'MT-01', criticality: 'high' },
   { id: 4, name: 'Кран шаровой', lat: 43.22, lon: 76.85, pipeline: 'MT-03', criticality: 'normal' },
   { id: 5, name: 'Компрессорная станция №2', lat: 50.28, lon: 57.21, pipeline: 'MT-01', criticality: 'medium' },
+  { id: 6, name: 'Участок трубы №12', lat: 51.13, lon: 71.43, pipeline: 'MT-01', criticality: 'high' },
+  { id: 7, name: 'Кран подвесной №3', lat: 43.25, lon: 76.88, pipeline: 'MT-03', criticality: 'normal' },
+  { id: 8, name: 'Турбокомпрессор ТВ-80-2', lat: 49.85, lon: 73.15, pipeline: 'MT-02', criticality: 'medium' },
 ];
 
 const getCriticalityColor = (criticality: string) => {
@@ -42,57 +47,205 @@ const getCriticalityColor = (criticality: string) => {
   }
 };
 
-export default function LeafletMap() {
+// Создание кастомных иконок маркеров
+const createCustomIcon = (color: string) => {
+  return L.divIcon({
+    className: 'custom-marker',
+    html: `
+      <div style="
+        width: 32px;
+        height: 32px;
+        background-color: ${color};
+        border: 3px solid white;
+        border-radius: 50%;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      ">
+        <div style="
+          width: 12px;
+          height: 12px;
+          background-color: white;
+          border-radius: 50%;
+        "></div>
+      </div>
+    `,
+    iconSize: [32, 32],
+    iconAnchor: [16, 16],
+    popupAnchor: [0, -16],
+  });
+};
+
+interface LeafletMapProps {
+  selectedMethod?: string;
+  selectedCriticality?: string;
+}
+
+export default function LeafletMap({ selectedMethod: _selectedMethod = 'all', selectedCriticality = 'all' }: LeafletMapProps) {
+  // selectedMethod зарезервирован для будущей фильтрации по методам
+  void _selectedMethod;
   const router = useRouter();
-  
+
+  // Фильтрация объектов
+  const filteredObjects = useMemo(() => {
+    return mockObjects.filter((obj) => {
+      if (selectedCriticality !== 'all' && obj.criticality !== selectedCriticality) {
+        return false;
+      }
+      // Здесь можно добавить фильтрацию по методу, если будет в данных
+      return true;
+    });
+  }, [selectedCriticality]);
+
+  // Кастомные стили для карты
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.textContent = `
+      .leaflet-container {
+        font-family: var(--font-geist);
+        background: var(--color-cream);
+      }
+      .leaflet-popup-content-wrapper {
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(33, 52, 72, 0.15);
+      }
+      .leaflet-popup-tip {
+        box-shadow: 0 2px 4px rgba(33, 52, 72, 0.1);
+      }
+      .leaflet-control-zoom {
+        border: none;
+        box-shadow: 0 2px 8px rgba(33, 52, 72, 0.15);
+      }
+      .leaflet-control-zoom a {
+        background-color: var(--color-white);
+        color: var(--color-dark-blue);
+        border: 1px solid var(--color-light-blue);
+        font-weight: 600;
+      }
+      .leaflet-control-zoom a:hover {
+        background-color: var(--color-cream);
+      }
+      .custom-marker {
+        background: transparent !important;
+        border: none !important;
+      }
+    `;
+    document.head.appendChild(style);
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
+
   return (
-    <div className="w-full h-[600px] rounded-lg overflow-hidden">
+    <div className="relative w-full h-[600px] rounded-lg overflow-hidden">
       <MapContainer
         center={[48.0, 66.0]}
         zoom={6}
+        minZoom={5}
+        maxZoom={18}
         style={{ height: '100%', width: '100%' }}
+        zoomControl={false}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          maxZoom={19}
         />
-        {mockObjects.map((obj) => (
-          <Marker
-            key={obj.id}
-            position={[obj.lat, obj.lon]}
-          >
-            <Popup>
-              <div className="min-w-[200px]" style={{ fontFamily: 'var(--font-geist)' }}>
-                <div className="font-semibold mb-2 text-base" style={{ color: 'var(--color-dark-blue)' }}>
-                  {obj.name}
-                </div>
-                <div className="text-sm mb-2" style={{ color: 'var(--color-blue)' }}>
-                  Магистраль: {obj.pipeline}
-                </div>
-                <div className="text-sm mb-3">
-                  <span
-                    className="inline-block px-2.5 py-1 rounded-md text-xs font-semibold text-white shadow-sm"
-                    style={{ backgroundColor: getCriticalityColor(obj.criticality) }}
+        <ZoomControl position="topright" />
+        
+        {filteredObjects.map((obj) => {
+          const iconColor = getCriticalityColor(obj.criticality);
+          const customIcon = createCustomIcon(iconColor);
+          
+          return (
+            <Marker
+              key={obj.id}
+              position={[obj.lat, obj.lon]}
+              icon={customIcon}
+            >
+              <Popup
+                closeButton={true}
+                className="custom-popup"
+                maxWidth={280}
+              >
+                <div className="min-w-[240px]" style={{ fontFamily: 'var(--font-geist)' }}>
+                  <div className="font-semibold mb-2 text-base" style={{ color: 'var(--color-dark-blue)' }}>
+                    {obj.name}
+                  </div>
+                  <div className="text-sm mb-2" style={{ color: 'var(--color-blue)' }}>
+                    Магистраль: <span className="font-semibold">{obj.pipeline}</span>
+                  </div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <span
+                      className="inline-block px-2.5 py-1 rounded-md text-xs font-semibold text-white shadow-sm"
+                      style={{ backgroundColor: iconColor }}
+                    >
+                      {obj.criticality === 'high' ? 'Высокая' : obj.criticality === 'medium' ? 'Средняя' : 'Норма'}
+                    </span>
+                    <span className="text-xs" style={{ color: 'var(--color-blue)' }}>
+                      ID: {obj.id}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => router.push(`/app/object/${obj.id}`)}
+                    className="w-full mt-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all hover:scale-105 hover:shadow-md"
+                    style={{
+                      backgroundColor: 'var(--color-dark-blue)',
+                      color: 'var(--color-white)',
+                      fontFamily: 'var(--font-geist)',
+                    }}
                   >
-                    {obj.criticality === 'high' ? 'Высокая' : obj.criticality === 'medium' ? 'Средняя' : 'Норма'}
-                  </span>
+                    Подробнее →
+                  </button>
                 </div>
-                <button
-                  onClick={() => router.push(`/app/object/${obj.id}`)}
-                  className="w-full mt-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all hover:scale-105 hover:shadow-md"
-                  style={{
-                    backgroundColor: 'var(--color-dark-blue)',
-                    color: 'var(--color-white)',
-                    fontFamily: 'var(--font-geist)',
-                  }}
-                >
-                  Подробнее
-                </button>
-              </div>
-            </Popup>
-          </Marker>
-        ))}
+              </Popup>
+            </Marker>
+          );
+        })}
       </MapContainer>
+      
+      {/* Легенда */}
+      <div
+        className="absolute bottom-4 left-4 z-[1000] p-4 rounded-lg shadow-lg"
+        style={{
+          background: 'var(--color-white)',
+          border: '1px solid var(--color-light-blue)',
+          fontFamily: 'var(--font-geist)',
+        }}
+      >
+        <div className="text-sm font-semibold mb-2" style={{ color: 'var(--color-dark-blue)' }}>
+          Критичность
+        </div>
+        <div className="space-y-1.5">
+          {[
+            { label: 'Норма', color: '#28ca42' },
+            { label: 'Средняя', color: '#ffbd2e' },
+            { label: 'Высокая', color: '#dc2626' },
+          ].map((item) => (
+            <div key={item.label} className="flex items-center gap-2">
+              <div
+                style={{
+                  width: '16px',
+                  height: '16px',
+                  backgroundColor: item.color,
+                  borderRadius: '50%',
+                  border: '2px solid white',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                }}
+              />
+              <span className="text-xs" style={{ color: 'var(--color-dark-blue)' }}>
+                {item.label}
+              </span>
+            </div>
+          ))}
+        </div>
+        <div className="mt-3 pt-3 border-t" style={{ borderColor: 'var(--color-light-blue)' }}>
+          <div className="text-xs" style={{ color: 'var(--color-blue)' }}>
+            Объектов: {filteredObjects.length}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

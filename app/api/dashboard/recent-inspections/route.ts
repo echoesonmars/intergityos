@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
 
+// Указываем, что route динамический (использует request)
+export const dynamic = 'force-dynamic';
+
 // GET /api/dashboard/recent-inspections - Получить последние обследования
 export async function GET(request: Request) {
   try {

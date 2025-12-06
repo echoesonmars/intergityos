@@ -77,7 +77,10 @@ export function MapView() {
             </h2>
           </div>
           <div className="p-4">
-            <LeafletMap />
+            <LeafletMap 
+              selectedMethod={selectedMethod}
+              selectedCriticality={selectedCriticality}
+            />
           </div>
         </div>
       </BlurFade>
