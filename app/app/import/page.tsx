@@ -1,10 +1,10 @@
 'use client';
 
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
-import { AppSidebar } from '../components/AppSidebar';
-import { DashboardView } from '../components/DashboardView';
+import { AppSidebar } from '../../components/AppSidebar';
+import { ImportView } from '../../components/ImportView';
 
-export default function AppPage() {
+export default function ImportPage() {
   return (
     <SidebarProvider>
       <AppSidebar />
@@ -13,9 +13,10 @@ export default function AppPage() {
           <SidebarTrigger />
         </header>
         <main className="flex flex-1 flex-col gap-4 p-4 md:p-6" style={{ background: 'var(--color-white)' }}>
-          <DashboardView />
+          <ImportView />
         </main>
       </SidebarInset>
     </SidebarProvider>
   );
 }
+

@@ -42,9 +42,9 @@ export default function Home() {
 
             {/* Description */}
             <BlurFade delay={0.3}>
-              <p className="text-base sm:text-lg leading-relaxed" style={{ fontFamily: 'var(--font-geist)', color: 'var(--color-blue)' }}>
+              <div className="text-base sm:text-lg leading-relaxed" style={{ fontFamily: 'var(--font-geist)', color: 'var(--color-blue)' }}>
                 <FlipText />
-              </p>
+              </div>
             </BlurFade>
 
             {/* CTA Button */}
