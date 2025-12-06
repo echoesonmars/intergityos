@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import localFont from "next/font/local";
 import "./globals.css";
 import { ToastProvider } from "./components/ToastProvider";
+import { IntegrityAI } from "./components/IntegrityAI";
 
 const geist = localFont({
   src: "./fonts/Geist.ttf",
@@ -33,6 +34,7 @@ export default function RootLayout({
       >
         <ToastProvider>
           {children}
+          <IntegrityAI />
         </ToastProvider>
       </body>
     </html>

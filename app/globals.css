@@ -2,6 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
+/* IntegrityAI Floating Button - всегда поверх всех элементов */
+.integrity-ai-button {
+  position: fixed !important;
+  z-index: 10000 !important;
+  pointer-events: auto !important;
+}
+
 * {
   letter-spacing: -0.07em;
 }
