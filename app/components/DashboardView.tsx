@@ -1,32 +1,103 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { BlurFade } from '@/components/ui/blur-fade';
 import { TextAnimate } from '@/components/ui/text-animate';
 import { Breadcrumbs } from './Breadcrumbs';
+import { Loader2 } from 'lucide-react';
+
+interface DashboardStats {
+  totalObjects: number;
+  totalInspections: number;
+  defectsFound: number;
+  criticalIssues: number;
+}
+
+interface MethodDistribution {
+  method: string;
+  count: number;
+  percentage: number;
+}
+
+interface CriticalityDistribution {
+  label: string;
+  count: number;
+  color: string;
+}
 
 export function DashboardView() {
-  // Mock данные для демонстрации
-  const stats = {
-    totalObjects: 1247,
-    totalInspections: 3421,
-    defectsFound: 89,
-    criticalIssues: 12,
-  };
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [methodsDistribution, setMethodsDistribution] = useState<MethodDistribution[]>([]);
+  const [criticalityDistribution, setCriticalityDistribution] = useState<CriticalityDistribution[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const methodsDistribution = [
-    { method: 'VIK', count: 450, percentage: 32 },
-    { method: 'PVK', count: 380, percentage: 27 },
-    { method: 'MPK', count: 290, percentage: 21 },
-    { method: 'UZK', count: 180, percentage: 13 },
-    { method: 'RGK', count: 120, percentage: 8 },
-  ];
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
 
-  const criticalityDistribution = [
-    { label: 'Норма', count: 856, color: '#28ca42' },
-    { label: 'Средняя', count: 302, color: '#ffbd2e' },
-    { label: 'Высокая', count: 89, color: '#dc2626' },
-  ];
+        // Параллельная загрузка всех данных
+        const [statsRes, methodsRes, criticalityRes] = await Promise.all([
+          fetch('/api/dashboard/stats'),
+          fetch('/api/dashboard/methods-distribution'),
+          fetch('/api/dashboard/criticality-distribution'),
+        ]);
+
+        if (!statsRes.ok || !methodsRes.ok || !criticalityRes.ok) {
+          throw new Error('Failed to fetch dashboard data');
+        }
+
+        const [statsData, methodsData, criticalityData] = await Promise.all([
+          statsRes.json(),
+          methodsRes.json(),
+          criticalityRes.json(),
+        ]);
+
+        setStats(statsData);
+        setMethodsDistribution(methodsData);
+        setCriticalityDistribution(criticalityData);
+      } catch (err) {
+        console.error('Error fetching dashboard data:', err);
+        setError('Не удалось загрузить данные дашборда');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <Breadcrumbs items={[{ label: 'Дашборд' }]} />
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 className="h-8 w-8 animate-spin" style={{ color: 'var(--color-blue)' }} />
+            <p style={{ fontFamily: 'var(--font-geist)', color: 'var(--color-blue)' }}>
+              Загрузка данных...
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !stats) {
+    return (
+      <div className="space-y-6">
+        <Breadcrumbs items={[{ label: 'Дашборд' }]} />
+        <div className="p-6 rounded-lg border" style={{ borderColor: '#dc2626', background: 'var(--color-white)' }}>
+          <p style={{ fontFamily: 'var(--font-geist)', color: '#dc2626' }}>
+            {error || 'Не удалось загрузить данные'}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
