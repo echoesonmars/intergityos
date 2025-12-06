@@ -11,9 +11,9 @@ export default function Home() {
   return (
     <main className="min-h-screen flex items-center px-4 sm:px-6 lg:px-8" style={{ background: 'var(--color-white)' }}>
       <div className="max-w-4xl w-full mx-auto py-6 lg:py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 items-center" style={{ gap: '0.5rem' }}>
           {/* Left Column - Text Content */}
-          <div className="space-y-3 lg:space-y-4 order-2 lg:order-1">
+          <div className="space-y-3 lg:space-y-4">
             {/* Logo */}
             <BlurFade delay={0.1}>
               <TextAnimate
@@ -68,7 +68,7 @@ export default function Home() {
 
           {/* Right Column - Map */}
           <BlurFade delay={0.2} direction="left">
-            <div className="order-1 lg:order-2 flex items-center justify-center">
+            <div className="flex items-center justify-center">
               <div className="w-full">
                 <div className="macos-window">
                   <div className="macos-titlebar">
