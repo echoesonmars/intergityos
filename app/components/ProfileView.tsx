@@ -3,12 +3,23 @@
 import { useState } from 'react';
 import { BlurFade } from '@/components/ui/blur-fade';
 import { TextAnimate } from '@/components/ui/text-animate';
+import { Breadcrumbs } from './Breadcrumbs';
 import { User, Mail, Phone, Building, Save, Edit2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { useToast } from './ToastProvider';
 
 export function ProfileView() {
+  const { showToast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
+  const [originalData, setOriginalData] = useState({
+    fullName: 'Иванов Иван Иванович',
+    email: 'user@integrityos.kz',
+    phone: '+7 (700) 123-45-67',
+    organization: 'ТОО "Интегрити ОС"',
+    position: 'Инженер по диагностике',
+    department: 'Отдел технического контроля',
+  });
   const [formData, setFormData] = useState({
     fullName: 'Иванов Иван Иванович',
     email: 'user@integrityos.kz',
@@ -24,16 +35,19 @@ export function ProfileView() {
 
   const handleSave = () => {
     setIsEditing(false);
-    // Здесь будет логика сохранения данных
+    setOriginalData(formData);
+    showToast('Профиль успешно обновлен', 'success');
   };
 
   const handleCancel = () => {
     setIsEditing(false);
-    // Здесь можно восстановить исходные данные
+    setFormData(originalData);
+    showToast('Изменения отменены', 'info');
   };
 
   return (
     <div className="space-y-6">
+      <Breadcrumbs items={[{ label: 'Профиль' }]} />
       <BlurFade delay={0.1}>
         <div className="flex items-center justify-between">
           <div>

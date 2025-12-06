@@ -1,26 +1,55 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { BlurFade } from '@/components/ui/blur-fade';
 import { TextAnimate } from '@/components/ui/text-animate';
 import { FileUpload } from '@/components/ui/file-upload';
+import { Breadcrumbs } from './Breadcrumbs';
+import { useToast } from './ToastProvider';
 
 export function ImportView() {
+  const router = useRouter();
+  const { showToast } = useToast();
   const [uploadStatus, setUploadStatus] = useState<string>('');
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   const handleFileChange = async (files: File[]) => {
     if (files.length === 0) return;
 
+    setIsUploading(true);
     setUploadStatus('Загрузка файлов...');
+    setUploadProgress(0);
+
+    // Симуляция загрузки с прогрессом
+    const interval = setInterval(() => {
+      setUploadProgress((prev) => {
+        if (prev >= 90) {
+          clearInterval(interval);
+          return 90;
+        }
+        return prev + 10;
+      });
+    }, 200);
 
     // Симуляция загрузки
     setTimeout(() => {
+      setUploadProgress(100);
+      setIsUploading(false);
       setUploadStatus(`Успешно загружено ${files.length} файл(ов)`);
+      showToast(`Успешно импортировано ${files.length} файл(ов)`, 'success');
+      
+      // Редирект на объекты через 2 секунды
+      setTimeout(() => {
+        router.push('/app/objects');
+      }, 2000);
     }, 2000);
   };
 
   return (
     <div className="space-y-6">
+      <Breadcrumbs items={[{ label: 'Импорт данных' }]} />
       <BlurFade delay={0.1}>
         <div>
           <TextAnimate
@@ -48,7 +77,24 @@ export function ImportView() {
               <FileUpload onChange={handleFileChange} />
             </div>
 
-            {uploadStatus && (
+            {isUploading && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-sm" style={{ fontFamily: 'var(--font-geist)', color: 'var(--color-dark-blue)' }}>
+                  <span>{uploadStatus}</span>
+                  <span>{uploadProgress}%</span>
+                </div>
+                <div className="w-full h-2 rounded-full" style={{ background: 'var(--color-light-blue)' }}>
+                  <div
+                    className="h-2 rounded-full transition-all"
+                    style={{
+                      width: `${uploadProgress}%`,
+                      background: 'var(--color-dark-blue)',
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+            {uploadStatus && !isUploading && (
               <div className="p-3 rounded" style={{ background: 'var(--color-cream)' }}>
                 <span className="text-sm" style={{ fontFamily: 'var(--font-geist)', color: 'var(--color-dark-blue)' }}>
                   {uploadStatus}

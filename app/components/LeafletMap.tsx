@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -42,6 +43,8 @@ const getCriticalityColor = (criticality: string) => {
 };
 
 export default function LeafletMap() {
+  const router = useRouter();
+  
   return (
     <div className="w-full h-[600px] rounded-lg overflow-hidden">
       <MapContainer
@@ -63,10 +66,10 @@ export default function LeafletMap() {
                 <div className="font-semibold mb-1" style={{ color: 'var(--color-dark-blue)' }}>
                   {obj.name}
                 </div>
-                <div className="text-sm" style={{ color: 'var(--color-blue)' }}>
+                <div className="text-sm mb-2" style={{ color: 'var(--color-blue)' }}>
                   Магистраль: {obj.pipeline}
                 </div>
-                <div className="text-sm mt-1">
+                <div className="text-sm mb-2">
                   <span
                     className="inline-block px-2 py-1 rounded text-xs text-white"
                     style={{ backgroundColor: getCriticalityColor(obj.criticality) }}
@@ -74,6 +77,17 @@ export default function LeafletMap() {
                     {obj.criticality === 'high' ? 'Высокая' : obj.criticality === 'medium' ? 'Средняя' : 'Норма'}
                   </span>
                 </div>
+                <button
+                  onClick={() => router.push(`/app/object/${obj.id}`)}
+                  className="w-full mt-2 px-3 py-1 rounded text-xs font-semibold transition-colors hover:opacity-80"
+                  style={{
+                    backgroundColor: 'var(--color-dark-blue)',
+                    color: 'var(--color-white)',
+                    fontFamily: 'var(--font-geist)',
+                  }}
+                >
+                  Подробнее
+                </button>
               </div>
             </Popup>
           </Marker>

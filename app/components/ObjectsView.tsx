@@ -1,8 +1,10 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { BlurFade } from '@/components/ui/blur-fade';
 import { TextAnimate } from '@/components/ui/text-animate';
+import { Breadcrumbs } from './Breadcrumbs';
 
 // Mock данные
 const mockObjects = [
@@ -14,6 +16,7 @@ const mockObjects = [
 ];
 
 export function ObjectsView() {
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedType, setSelectedType] = useState<string>('all');
   const [selectedPipeline, setSelectedPipeline] = useState<string>('all');
@@ -33,6 +36,7 @@ export function ObjectsView() {
 
   return (
     <div className="space-y-6">
+      <Breadcrumbs items={[{ label: 'Объекты' }]} />
       <BlurFade delay={0.1}>
         <div>
           <TextAnimate
@@ -150,6 +154,9 @@ export function ObjectsView() {
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.backgroundColor = 'transparent';
+                    }}
+                    onClick={() => {
+                      router.push(`/app/object/${obj.id}`);
                     }}
                   >
                     <td className="p-3 text-sm" style={{ fontFamily: 'var(--font-geist)', color: 'var(--color-dark-blue)' }}>

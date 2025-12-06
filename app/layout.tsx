@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import localFont from "next/font/local";
 import "./globals.css";
+import { ToastProvider } from "./components/ToastProvider";
 
 const geist = localFont({
   src: "./fonts/Geist.ttf",
@@ -30,7 +31,9 @@ export default function RootLayout({
       <body
         className={`${geist.variable} ${jost.variable} antialiased`}
       >
-        {children}
+        <ToastProvider>
+          {children}
+        </ToastProvider>
       </body>
     </html>
   );

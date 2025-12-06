@@ -1,7 +1,9 @@
 'use client';
 
+import Link from 'next/link';
 import { BlurFade } from '@/components/ui/blur-fade';
 import { TextAnimate } from '@/components/ui/text-animate';
+import { Breadcrumbs } from './Breadcrumbs';
 
 export function DashboardView() {
   // Mock данные для демонстрации
@@ -28,6 +30,7 @@ export function DashboardView() {
 
   return (
     <div className="space-y-6">
+      <Breadcrumbs items={[{ label: 'Дашборд' }]} />
       <BlurFade delay={0.1}>
         <div>
           <TextAnimate
@@ -48,38 +51,38 @@ export function DashboardView() {
       {/* Статистические карточки */}
       <BlurFade delay={0.2}>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="p-4 rounded-lg border" style={{ borderColor: 'var(--color-light-blue)', background: 'var(--color-white)' }}>
+          <Link href="/app/objects" className="p-4 rounded-lg border hover:shadow-md transition-all cursor-pointer" style={{ borderColor: 'var(--color-light-blue)', background: 'var(--color-white)' }}>
             <div className="text-sm mb-1" style={{ fontFamily: 'var(--font-geist)', color: 'var(--color-blue)' }}>
               Всего объектов
             </div>
             <div className="text-2xl font-bold" style={{ fontFamily: 'var(--font-jost)', color: 'var(--color-dark-blue)' }}>
               {stats.totalObjects.toLocaleString()}
             </div>
-          </div>
-          <div className="p-4 rounded-lg border" style={{ borderColor: 'var(--color-light-blue)', background: 'var(--color-white)' }}>
+          </Link>
+          <Link href="/app/objects" className="p-4 rounded-lg border hover:shadow-md transition-all cursor-pointer" style={{ borderColor: 'var(--color-light-blue)', background: 'var(--color-white)' }}>
             <div className="text-sm mb-1" style={{ fontFamily: 'var(--font-geist)', color: 'var(--color-blue)' }}>
               Обследований
             </div>
             <div className="text-2xl font-bold" style={{ fontFamily: 'var(--font-jost)', color: 'var(--color-dark-blue)' }}>
               {stats.totalInspections.toLocaleString()}
             </div>
-          </div>
-          <div className="p-4 rounded-lg border" style={{ borderColor: 'var(--color-light-blue)', background: 'var(--color-white)' }}>
+          </Link>
+          <Link href="/app/objects?filter=defects" className="p-4 rounded-lg border hover:shadow-md transition-all cursor-pointer" style={{ borderColor: 'var(--color-light-blue)', background: 'var(--color-white)' }}>
             <div className="text-sm mb-1" style={{ fontFamily: 'var(--font-geist)', color: 'var(--color-blue)' }}>
               Найдено дефектов
             </div>
             <div className="text-2xl font-bold" style={{ fontFamily: 'var(--font-jost)', color: '#dc2626' }}>
               {stats.defectsFound}
             </div>
-          </div>
-          <div className="p-4 rounded-lg border" style={{ borderColor: 'var(--color-light-blue)', background: 'var(--color-white)' }}>
+          </Link>
+          <Link href="/app/notifications?filter=critical" className="p-4 rounded-lg border hover:shadow-md transition-all cursor-pointer" style={{ borderColor: 'var(--color-light-blue)', background: 'var(--color-white)' }}>
             <div className="text-sm mb-1" style={{ fontFamily: 'var(--font-geist)', color: 'var(--color-blue)' }}>
               Критических
             </div>
             <div className="text-2xl font-bold" style={{ fontFamily: 'var(--font-jost)', color: '#dc2626' }}>
               {stats.criticalIssues}
             </div>
-          </div>
+          </Link>
         </div>
       </BlurFade>
 

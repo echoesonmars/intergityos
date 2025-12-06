@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { BlurFade } from '@/components/ui/blur-fade';
 import { TextAnimate } from '@/components/ui/text-animate';
+import { Breadcrumbs } from './Breadcrumbs';
 import dynamic from 'next/dynamic';
 
 const LeafletMap = dynamic(() => import('./LeafletMap'), { ssr: false });
@@ -16,6 +17,7 @@ export function MapView() {
 
   return (
     <div className="space-y-6">
+      <Breadcrumbs items={[{ label: 'Карта' }]} />
       <BlurFade delay={0.1}>
         <div>
           <TextAnimate

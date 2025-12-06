@@ -2,7 +2,7 @@
 
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { LayoutDashboard, Map, List, Upload, FileText, Settings, User } from 'lucide-react';
+import { LayoutDashboard, Map, List, Upload, FileText, Settings, User, Brain, BarChart3, Bell, Calendar, GitCompare, Star, History } from 'lucide-react';
 import {
   Sidebar,
   SidebarContent,
@@ -33,14 +33,49 @@ const menuItems = [
     url: '/app/objects',
   },
   {
+    title: 'AI-анализ',
+    icon: Brain,
+    url: '/app/ai-analysis',
+  },
+  {
+    title: 'Аналитика',
+    icon: BarChart3,
+    url: '/app/analytics',
+  },
+  {
     title: 'Импорт',
     icon: Upload,
     url: '/app/import',
   },
   {
+    title: 'Уведомления',
+    icon: Bell,
+    url: '/app/notifications',
+  },
+  {
+    title: 'Планирование',
+    icon: Calendar,
+    url: '/app/planning',
+  },
+  {
+    title: 'Сравнение',
+    icon: GitCompare,
+    url: '/app/compare',
+  },
+  {
+    title: 'Избранное',
+    icon: Star,
+    url: '/app/favorites',
+  },
+  {
     title: 'Отчеты',
     icon: FileText,
     url: '/app/reports',
+  },
+  {
+    title: 'История',
+    icon: History,
+    url: '/app/audit-log',
   },
   {
     title: 'Настройки',
