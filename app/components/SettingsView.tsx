@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { BlurFade } from '@/components/ui/blur-fade';
 import { TextAnimate } from '@/components/ui/text-animate';
 import { Breadcrumbs } from './Breadcrumbs';
+import { Select } from '@/components/ui/select';
 import { Moon, Sun } from 'lucide-react';
 import { useToast } from './ToastProvider';
 
@@ -84,39 +85,31 @@ export function SettingsView() {
               </button>
             </div>
             <div>
-              <label className="block text-sm mb-2" style={{ fontFamily: 'var(--font-geist)', color: 'var(--color-dark-blue)' }}>
+              <label className="block text-sm mb-2 font-semibold" style={{ fontFamily: 'var(--font-geist)', color: 'var(--color-dark-blue)' }}>
                 Язык интерфейса
               </label>
-              <select
-                className="w-full p-2 rounded border"
-                style={{ 
-                  borderColor: 'var(--color-light-blue)', 
-                  background: 'var(--color-white)',
-                  fontFamily: 'var(--font-geist)',
-                  color: 'var(--color-dark-blue)'
-                }}
-              >
-                <option value="ru">Русский</option>
-                <option value="kz">Қазақша</option>
-                <option value="en">English</option>
-              </select>
+              <Select
+                value="ru"
+                onChange={() => {}}
+                options={[
+                  { value: 'ru', label: 'Русский' },
+                  { value: 'kz', label: 'Қазақша' },
+                  { value: 'en', label: 'English' },
+                ]}
+              />
             </div>
             <div>
-              <label className="block text-sm mb-2" style={{ fontFamily: 'var(--font-geist)', color: 'var(--color-dark-blue)' }}>
+              <label className="block text-sm mb-2 font-semibold" style={{ fontFamily: 'var(--font-geist)', color: 'var(--color-dark-blue)' }}>
                 Единицы измерения
               </label>
-              <select
-                className="w-full p-2 rounded border"
-                style={{ 
-                  borderColor: 'var(--color-light-blue)', 
-                  background: 'var(--color-white)',
-                  fontFamily: 'var(--font-geist)',
-                  color: 'var(--color-dark-blue)'
-                }}
-              >
-                <option value="metric">Метрические</option>
-                <option value="imperial">Имперские</option>
-              </select>
+              <Select
+                value="metric"
+                onChange={() => {}}
+                options={[
+                  { value: 'metric', label: 'Метрические' },
+                  { value: 'imperial', label: 'Имперские' },
+                ]}
+              />
             </div>
             <button
               onClick={handleSaveSettings}

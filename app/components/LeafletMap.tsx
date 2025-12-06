@@ -62,16 +62,16 @@ export default function LeafletMap() {
             position={[obj.lat, obj.lon]}
           >
             <Popup>
-              <div style={{ fontFamily: 'var(--font-geist)' }}>
-                <div className="font-semibold mb-1" style={{ color: 'var(--color-dark-blue)' }}>
+              <div className="min-w-[200px]" style={{ fontFamily: 'var(--font-geist)' }}>
+                <div className="font-semibold mb-2 text-base" style={{ color: 'var(--color-dark-blue)' }}>
                   {obj.name}
                 </div>
                 <div className="text-sm mb-2" style={{ color: 'var(--color-blue)' }}>
                   Магистраль: {obj.pipeline}
                 </div>
-                <div className="text-sm mb-2">
+                <div className="text-sm mb-3">
                   <span
-                    className="inline-block px-2 py-1 rounded text-xs text-white"
+                    className="inline-block px-2.5 py-1 rounded-md text-xs font-semibold text-white shadow-sm"
                     style={{ backgroundColor: getCriticalityColor(obj.criticality) }}
                   >
                     {obj.criticality === 'high' ? 'Высокая' : obj.criticality === 'medium' ? 'Средняя' : 'Норма'}
@@ -79,7 +79,7 @@ export default function LeafletMap() {
                 </div>
                 <button
                   onClick={() => router.push(`/app/object/${obj.id}`)}
-                  className="w-full mt-2 px-3 py-1 rounded text-xs font-semibold transition-colors hover:opacity-80"
+                  className="w-full mt-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all hover:scale-105 hover:shadow-md"
                   style={{
                     backgroundColor: 'var(--color-dark-blue)',
                     color: 'var(--color-white)',

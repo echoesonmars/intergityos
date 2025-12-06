@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { BlurFade } from '@/components/ui/blur-fade';
 import { TextAnimate } from '@/components/ui/text-animate';
 import { Breadcrumbs } from './Breadcrumbs';
+import { Select } from '@/components/ui/select';
 import dynamic from 'next/dynamic';
 
 const LeafletMap = dynamic(() => import('./LeafletMap'), { ssr: false });
@@ -39,48 +40,30 @@ export function MapView() {
       <BlurFade delay={0.2}>
         <div className="flex flex-wrap gap-4 p-4 rounded-lg border" style={{ borderColor: 'var(--color-light-blue)', background: 'var(--color-white)' }}>
           <div className="flex-1 min-w-[200px]">
-            <label className="block text-sm mb-2" style={{ fontFamily: 'var(--font-geist)', color: 'var(--color-dark-blue)' }}>
+            <label className="block text-sm mb-2 font-semibold" style={{ fontFamily: 'var(--font-geist)', color: 'var(--color-dark-blue)' }}>
               Метод контроля
             </label>
-            <select
+            <Select
               value={selectedMethod}
-              onChange={(e) => setSelectedMethod(e.target.value)}
-              className="w-full p-2 rounded border"
-              style={{ 
-                borderColor: 'var(--color-light-blue)', 
-                background: 'var(--color-white)',
-                fontFamily: 'var(--font-geist)',
-                color: 'var(--color-dark-blue)'
-              }}
-            >
-              {methods.map((method) => (
-                <option key={method} value={method}>
-                  {method === 'all' ? 'Все методы' : method}
-                </option>
-              ))}
-            </select>
+              onChange={setSelectedMethod}
+              options={methods.map((method) => ({
+                value: method,
+                label: method === 'all' ? 'Все методы' : method,
+              }))}
+            />
           </div>
           <div className="flex-1 min-w-[200px]">
-            <label className="block text-sm mb-2" style={{ fontFamily: 'var(--font-geist)', color: 'var(--color-dark-blue)' }}>
+            <label className="block text-sm mb-2 font-semibold" style={{ fontFamily: 'var(--font-geist)', color: 'var(--color-dark-blue)' }}>
               Критичность
             </label>
-            <select
+            <Select
               value={selectedCriticality}
-              onChange={(e) => setSelectedCriticality(e.target.value)}
-              className="w-full p-2 rounded border"
-              style={{ 
-                borderColor: 'var(--color-light-blue)', 
-                background: 'var(--color-white)',
-                fontFamily: 'var(--font-geist)',
-                color: 'var(--color-dark-blue)'
-              }}
-            >
-              {criticalities.map((crit) => (
-                <option key={crit} value={crit}>
-                  {crit === 'all' ? 'Все' : crit === 'normal' ? 'Норма' : crit === 'medium' ? 'Средняя' : 'Высокая'}
-                </option>
-              ))}
-            </select>
+              onChange={setSelectedCriticality}
+              options={criticalities.map((crit) => ({
+                value: crit,
+                label: crit === 'all' ? 'Все' : crit === 'normal' ? 'Норма' : crit === 'medium' ? 'Средняя' : 'Высокая',
+              }))}
+            />
           </div>
         </div>
       </BlurFade>

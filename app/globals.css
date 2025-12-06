@@ -90,6 +90,10 @@ body {
 
 
 @layer base {
+  * {
+    --ring-color: var(--color-dark-blue);
+  }
+  
   :root {
     /* Brand Colors */
     --color-dark-blue: #213448;

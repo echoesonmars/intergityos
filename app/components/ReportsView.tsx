@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { BlurFade } from '@/components/ui/blur-fade';
 import { TextAnimate } from '@/components/ui/text-animate';
 import { Breadcrumbs } from './Breadcrumbs';
+import { Select } from '@/components/ui/select';
 import { FileText, Download, FileSpreadsheet, FileDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from './ToastProvider';
@@ -57,25 +58,19 @@ export function ReportsView() {
             </h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm mb-2" style={{ fontFamily: 'var(--font-geist)', color: 'var(--color-dark-blue)' }}>
+                <label className="block text-sm mb-2 font-semibold" style={{ fontFamily: 'var(--font-geist)', color: 'var(--color-dark-blue)' }}>
                   Тип отчета
                 </label>
-                <select
+                <Select
                   value={reportType}
-                  onChange={(e) => setReportType(e.target.value)}
-                  className="w-full p-2 rounded border"
-                  style={{ 
-                    borderColor: 'var(--color-light-blue)', 
-                    background: 'var(--color-white)',
-                    fontFamily: 'var(--font-geist)',
-                    color: 'var(--color-dark-blue)'
-                  }}
-                >
-                  <option value="summary">Общая статистика</option>
-                  <option value="defects">Таблица дефектов</option>
-                  <option value="excavations">Рекомендуемые раскопки</option>
-                  <option value="map">Карта участка</option>
-                </select>
+                  onChange={setReportType}
+                  options={[
+                    { value: 'summary', label: 'Общая статистика' },
+                    { value: 'defects', label: 'Таблица дефектов' },
+                    { value: 'excavations', label: 'Рекомендуемые раскопки' },
+                    { value: 'map', label: 'Карта участка' },
+                  ]}
+                />
               </div>
               <div className="flex gap-2">
                 <Button

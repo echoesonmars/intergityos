@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { BlurFade } from '@/components/ui/blur-fade';
 import { TextAnimate } from '@/components/ui/text-animate';
 import { Breadcrumbs } from './Breadcrumbs';
+import { Select } from '@/components/ui/select';
 import { History, User, FileEdit, Trash2, Plus } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 
@@ -92,23 +93,17 @@ export function AuditLogView() {
             />
           </div>
           <div className="flex-1 min-w-[150px]">
-            <select
+            <Select
               value={filterAction}
-              onChange={(e) => setFilterAction(e.target.value)}
-              className="w-full p-2 rounded border"
-              style={{
-                borderColor: 'var(--color-light-blue)',
-                background: 'var(--color-white)',
-                fontFamily: 'var(--font-geist)',
-                color: 'var(--color-dark-blue)',
-              }}
-            >
-              <option value="all">Все действия</option>
-              <option value="created">Создание</option>
-              <option value="updated">Обновление</option>
-              <option value="deleted">Удаление</option>
-              <option value="imported">Импорт</option>
-            </select>
+              onChange={setFilterAction}
+              options={[
+                { value: 'all', label: 'Все действия' },
+                { value: 'created', label: 'Создание' },
+                { value: 'updated', label: 'Обновление' },
+                { value: 'deleted', label: 'Удаление' },
+                { value: 'imported', label: 'Импорт' },
+              ]}
+            />
           </div>
         </div>
       </BlurFade>

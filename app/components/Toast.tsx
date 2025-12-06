@@ -39,7 +39,7 @@ export function Toast({ message, type = 'info', duration = 3000, onClose }: Toas
 
   return (
     <div
-      className={`fixed top-4 right-4 z-50 p-4 rounded-lg border shadow-lg flex items-center gap-3 min-w-[300px] max-w-md transition-all ${
+      className={`fixed top-4 right-4 z-[100] p-4 rounded-lg border shadow-lg flex items-center gap-3 min-w-[300px] max-w-md transition-all ${
         isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'
       }`}
       style={{

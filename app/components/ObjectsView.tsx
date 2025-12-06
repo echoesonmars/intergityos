@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { BlurFade } from '@/components/ui/blur-fade';
 import { TextAnimate } from '@/components/ui/text-animate';
 import { Breadcrumbs } from './Breadcrumbs';
+import { Select } from '@/components/ui/select';
 
 // Mock данные
 const mockObjects = [
@@ -73,40 +74,28 @@ export function ObjectsView() {
             />
           </div>
           <div className="flex-1 min-w-[150px]">
-            <select
+            <Select
               value={selectedType}
-              onChange={(e) => setSelectedType(e.target.value)}
-              className="w-full p-2 rounded border"
-              style={{ 
-                borderColor: 'var(--color-light-blue)', 
-                background: 'var(--color-white)',
-                fontFamily: 'var(--font-geist)',
-                color: 'var(--color-dark-blue)'
-              }}
-            >
-              <option value="all">Все типы</option>
-              <option value="crane">Кран</option>
-              <option value="compressor">Компрессор</option>
-              <option value="pipeline_section">Участок трубы</option>
-            </select>
+              onChange={setSelectedType}
+              options={[
+                { value: 'all', label: 'Все типы' },
+                { value: 'crane', label: 'Кран' },
+                { value: 'compressor', label: 'Компрессор' },
+                { value: 'pipeline_section', label: 'Участок трубы' },
+              ]}
+            />
           </div>
           <div className="flex-1 min-w-[150px]">
-            <select
+            <Select
               value={selectedPipeline}
-              onChange={(e) => setSelectedPipeline(e.target.value)}
-              className="w-full p-2 rounded border"
-              style={{ 
-                borderColor: 'var(--color-light-blue)', 
-                background: 'var(--color-white)',
-                fontFamily: 'var(--font-geist)',
-                color: 'var(--color-dark-blue)'
-              }}
-            >
-              <option value="all">Все магистрали</option>
-              <option value="MT-01">MT-01</option>
-              <option value="MT-02">MT-02</option>
-              <option value="MT-03">MT-03</option>
-            </select>
+              onChange={setSelectedPipeline}
+              options={[
+                { value: 'all', label: 'Все магистрали' },
+                { value: 'MT-01', label: 'MT-01' },
+                { value: 'MT-02', label: 'MT-02' },
+                { value: 'MT-03', label: 'MT-03' },
+              ]}
+            />
           </div>
         </div>
       </BlurFade>

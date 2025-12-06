@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { BlurFade } from '@/components/ui/blur-fade';
 import { TextAnimate } from '@/components/ui/text-animate';
 import { Breadcrumbs } from './Breadcrumbs';
+import { Select } from '@/components/ui/select';
 import { TrendingUp, TrendingDown, Calendar, BarChart3 } from 'lucide-react';
 
 // Mock данные для графиков
@@ -43,23 +44,16 @@ export function AnalyticsView() {
               Расширенная аналитика и тренды
             </p>
           </div>
-          <div className="flex gap-2">
-            {(['year', 'quarter', 'month'] as const).map((period) => (
-              <button
-                key={period}
-                onClick={() => setSelectedPeriod(period)}
-                className="px-4 py-2 rounded border transition-colors"
-                style={{
-                  borderColor: selectedPeriod === period ? 'var(--color-dark-blue)' : 'var(--color-light-blue)',
-                  background: selectedPeriod === period ? 'var(--color-dark-blue)' : 'var(--color-white)',
-                  color: selectedPeriod === period ? 'var(--color-white)' : 'var(--color-dark-blue)',
-                  fontFamily: 'var(--font-geist)',
-                }}
-              >
-                {period === 'year' ? 'Год' : period === 'quarter' ? 'Квартал' : 'Месяц'}
-              </button>
-            ))}
-          </div>
+          <Select
+            value={selectedPeriod}
+            onChange={(value) => setSelectedPeriod(value as typeof selectedPeriod)}
+            options={[
+              { value: 'year', label: 'Год' },
+              { value: 'quarter', label: 'Квартал' },
+              { value: 'month', label: 'Месяц' },
+            ]}
+            className="w-40"
+          />
         </div>
       </BlurFade>
 
