@@ -80,9 +80,11 @@ const createCustomIcon = (color: string) => {
 interface LeafletMapProps {
   selectedMethod?: string;
   selectedCriticality?: string;
+  height?: string;
+  showLegend?: boolean;
 }
 
-export default function LeafletMap({ selectedMethod: _selectedMethod = 'all', selectedCriticality = 'all' }: LeafletMapProps) {
+export default function LeafletMap({ selectedMethod: _selectedMethod = 'all', selectedCriticality = 'all', height = '600px', showLegend = true }: LeafletMapProps) {
   // selectedMethod зарезервирован для будущей фильтрации по методам
   void _selectedMethod;
   const router = useRouter();
@@ -138,7 +140,7 @@ export default function LeafletMap({ selectedMethod: _selectedMethod = 'all', se
   }, []);
 
   return (
-    <div className="relative w-full h-[600px] rounded-lg overflow-hidden">
+    <div className="relative w-full rounded-lg overflow-hidden" style={{ height }}>
       <MapContainer
         center={[48.0, 66.0]}
         zoom={6}
@@ -206,6 +208,7 @@ export default function LeafletMap({ selectedMethod: _selectedMethod = 'all', se
       </MapContainer>
       
       {/* Легенда */}
+      {showLegend && (
       <div
         className="absolute bottom-4 left-4 z-[1000] p-4 rounded-lg shadow-lg"
         style={{
@@ -246,6 +249,7 @@ export default function LeafletMap({ selectedMethod: _selectedMethod = 'all', se
           </div>
         </div>
       </div>
+      )}
     </div>
   );
 }

@@ -29,6 +29,9 @@ export async function GET() {
       totalInspections: stats.totalInspections + randomVariation() * 2,
       defectsFound: Math.max(0, stats.defectsFound + randomVariation()),
       criticalIssues: Math.max(0, stats.criticalIssues + randomVariation()),
+      activeDefects: 547 + Math.floor(variation * 0.1) + randomVariation(),
+      highRisk: 62 + Math.floor(variation * 0.1) + randomVariation(),
+      repairsPerYear: 14 + Math.floor(variation * 0.05) + randomVariation(),
     };
 
     return NextResponse.json(finalStats, { status: 200 });
