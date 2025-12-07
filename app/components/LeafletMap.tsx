@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -22,17 +22,16 @@ const Marker = dynamic(() => import('react-leaflet').then((mod) => mod.Marker), 
 const Popup = dynamic(() => import('react-leaflet').then((mod) => mod.Popup), { ssr: false });
 const ZoomControl = dynamic(() => import('react-leaflet').then((mod) => mod.ZoomControl), { ssr: false });
 
-// Mock данные объектов
-const mockObjects = [
-  { id: 1, name: 'Кран подвесной', lat: 52.96, lon: 63.12, pipeline: 'MT-02', criticality: 'medium' },
-  { id: 2, name: 'Турбокомпрессор ТВ-80-1', lat: 49.80, lon: 73.10, pipeline: 'MT-02', criticality: 'normal' },
-  { id: 3, name: 'Участок трубы №45', lat: 51.16, lon: 71.47, pipeline: 'MT-01', criticality: 'high' },
-  { id: 4, name: 'Кран шаровой', lat: 43.22, lon: 76.85, pipeline: 'MT-03', criticality: 'normal' },
-  { id: 5, name: 'Компрессорная станция №2', lat: 50.28, lon: 57.21, pipeline: 'MT-01', criticality: 'medium' },
-  { id: 6, name: 'Участок трубы №12', lat: 51.13, lon: 71.43, pipeline: 'MT-01', criticality: 'high' },
-  { id: 7, name: 'Кран подвесной №3', lat: 43.25, lon: 76.88, pipeline: 'MT-03', criticality: 'normal' },
-  { id: 8, name: 'Турбокомпрессор ТВ-80-2', lat: 49.85, lon: 73.15, pipeline: 'MT-02', criticality: 'medium' },
-];
+interface MapDefect {
+  id: string | number;
+  lat: number;
+  lng: number;
+  criticality: 'normal' | 'medium' | 'high';
+  severity: string;
+  type: string;
+  segment: number;
+  pipeline: string;
+}
 
 const getCriticalityColor = (criticality: string) => {
   switch (criticality) {
@@ -88,17 +87,47 @@ export default function LeafletMap({ selectedMethod: _selectedMethod = 'all', se
   // selectedMethod зарезервирован для будущей фильтрации по методам
   void _selectedMethod;
   const router = useRouter();
+  const [defects, setDefects] = useState<MapDefect[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchDefects = async () => {
+      try {
+        setIsLoading(true);
+        const params = new URLSearchParams();
+        if (selectedCriticality !== 'all') {
+          params.append('criticality', selectedCriticality);
+        }
+        if (_selectedMethod !== 'all') {
+          params.append('method', _selectedMethod);
+        }
+
+        const response = await fetch(`/api/map/defects?${params.toString()}`);
+        if (response.ok) {
+          const data = await response.json();
+          setDefects(data);
+        }
+      } catch (error) {
+        console.error('Error fetching map defects:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchDefects();
+  }, [selectedCriticality, _selectedMethod]);
 
   // Фильтрация объектов
   const filteredObjects = useMemo(() => {
-    return mockObjects.filter((obj) => {
-      if (selectedCriticality !== 'all' && obj.criticality !== selectedCriticality) {
-        return false;
-      }
-      // Здесь можно добавить фильтрацию по методу, если будет в данных
-      return true;
-    });
-  }, [selectedCriticality]);
+    return defects.map((defect) => ({
+      id: defect.id,
+      name: `Сегмент ${defect.segment} - ${defect.type}`,
+      lat: defect.lat,
+      lon: defect.lng,
+      pipeline: defect.pipeline,
+      criticality: defect.criticality,
+    }));
+  }, [defects]);
 
   // Кастомные стили для карты
   useEffect(() => {
@@ -138,6 +167,16 @@ export default function LeafletMap({ selectedMethod: _selectedMethod = 'all', se
       document.head.removeChild(style);
     };
   }, []);
+
+  if (isLoading) {
+    return (
+      <div className="relative w-full rounded-lg overflow-hidden flex items-center justify-center" style={{ height, background: 'var(--color-cream)' }}>
+        <div className="text-center">
+          <p style={{ fontFamily: 'var(--font-geist)', color: 'var(--color-blue)' }}>Загрузка карты...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative w-full rounded-lg overflow-hidden" style={{ height }}>

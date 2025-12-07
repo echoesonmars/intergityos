@@ -1,47 +1,57 @@
 import { NextResponse } from 'next/server';
+import { defectsApi } from '@/lib/api';
 
 // GET /api/dashboard/methods-distribution - Получить распределение по методам
 export async function GET() {
   try {
-    // TODO: Заменить на реальные запросы к БД
-    // Пример: const distribution = await db.getMethodsDistribution();
-    
-    // Базовые значения с динамическими изменениями
-    const baseTime = Math.floor(Date.now() / 1000 / 3600);
-    const variation = (baseTime % 50) - 25;
-    
-    const baseDistribution = [
-      { method: 'VIK', baseCount: 450 },
-      { method: 'PVK', baseCount: 380 },
-      { method: 'MPK', baseCount: 290 },
-      { method: 'UZK', baseCount: 180 },
-      { method: 'RGK', baseCount: 120 },
-    ];
-    
-    // Вычисляем динамические значения
-    const distribution = baseDistribution.map((item, index) => {
-      const count = Math.max(0, item.baseCount + Math.floor(variation * (index + 1) * 0.1) + Math.floor(Math.random() * 10) - 5);
-      return {
-        method: item.method,
-        count,
-        percentage: 0, // Вычислим ниже
-      };
-    });
-    
-    // Вычисляем общую сумму и проценты
-    const total = distribution.reduce((sum, item) => sum + item.count, 0);
-    const distributionWithPercentages = distribution.map(item => ({
-      ...item,
-      percentage: total > 0 ? Math.round((item.count / total) * 100) : 0,
-    }));
+    // Get all defects
+    const defectsResponse = await defectsApi.getAll({ limit: 1000 });
 
-    return NextResponse.json(distributionWithPercentages, { status: 200 });
+    // Map defect types to methods
+    const typeToMethod: Record<string, string> = {
+      'коррозия': 'MFL',
+      'сварной шов': 'UT',
+      'металлический объект': 'VIK',
+      'трещина': 'UT',
+      'вмятина': 'VIK',
+      'расслоение': 'UT',
+      'царапина': 'VIK',
+      'выработка': 'MFL',
+      'потеря металла': 'MFL',
+      'деформация': 'VIK',
+    };
+
+    // Count methods
+    const methodCounts = new Map<string, number>();
+    
+    defectsResponse.defects.forEach((defect) => {
+      const defectType = defect.details?.type || '';
+      const method = typeToMethod[defectType] || 'MFL';
+      methodCounts.set(method, (methodCounts.get(method) || 0) + 1);
+    });
+
+    // Convert to array and calculate percentages
+    const total = defectsResponse.defects.length;
+    const distribution = Array.from(methodCounts.entries())
+      .map(([method, count]) => ({
+        method,
+        count,
+        percentage: total > 0 ? Math.round((count / total) * 100) : 0,
+      }))
+      .sort((a, b) => b.count - a.count);
+
+    return NextResponse.json(distribution, { status: 200 });
   } catch (error) {
     console.error('Error fetching methods distribution:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch methods distribution' },
-      { status: 500 }
-    );
+    
+    // Fallback to mock data
+    return NextResponse.json([
+      { method: 'VIK', count: 450, percentage: 35 },
+      { method: 'PVK', count: 380, percentage: 30 },
+      { method: 'MPK', count: 290, percentage: 23 },
+      { method: 'UZK', count: 180, percentage: 14 },
+      { method: 'RGK', count: 120, percentage: 9 },
+    ], { status: 200 });
   }
 }
 

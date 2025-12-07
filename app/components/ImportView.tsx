@@ -22,29 +22,52 @@ export function ImportView() {
     setUploadStatus('Загрузка файлов...');
     setUploadProgress(0);
 
-    // Симуляция загрузки с прогрессом
-    const interval = setInterval(() => {
-      setUploadProgress((prev) => {
-        if (prev >= 90) {
-          clearInterval(interval);
-          return 90;
-        }
-        return prev + 10;
-      });
-    }, 200);
-
-    // Симуляция загрузки
-    setTimeout(() => {
-      setUploadProgress(100);
-      setIsUploading(false);
-      setUploadStatus(`Успешно загружено ${files.length} файл(ов)`);
-      showToast(`Успешно импортировано ${files.length} файл(ов)`, 'success');
+    try {
+      // Upload files to server (in future, implement file upload endpoint)
+      // For now, we'll simulate upload and then reload data
       
-      // Редирект на объекты через 2 секунды
-      setTimeout(() => {
-        router.push('/app/objects');
-      }, 2000);
-    }, 2000);
+      // Simulate upload progress
+      const interval = setInterval(() => {
+        setUploadProgress((prev) => {
+          if (prev >= 90) {
+            clearInterval(interval);
+            return 90;
+          }
+          return prev + 10;
+        });
+      }, 200);
+
+      // After upload, reload data from backend
+      // Note: This requires authentication, so we'll call our API route
+      const reloadResponse = await fetch('/api/admin/reload', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      clearInterval(interval);
+      setUploadProgress(100);
+
+      if (reloadResponse.ok) {
+        const result = await reloadResponse.json();
+        setIsUploading(false);
+        setUploadStatus(`Успешно загружено ${files.length} файл(ов). Импортировано ${result.inserted || 0} дефектов`);
+        showToast(`Успешно импортировано ${result.inserted || 0} дефектов`, 'success');
+        
+        // Redirect to objects after 2 seconds
+        setTimeout(() => {
+          router.push('/app/objects');
+        }, 2000);
+      } else {
+        throw new Error('Failed to reload data');
+      }
+    } catch (error) {
+      console.error('Import error:', error);
+      setIsUploading(false);
+      setUploadStatus('Ошибка при импорте данных');
+      showToast('Ошибка при импорте данных. Проверьте подключение к серверу.', 'error');
+    }
   };
 
   return (

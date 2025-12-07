@@ -1,28 +1,109 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { BlurFade } from '@/components/ui/blur-fade';
 import { TextAnimate } from '@/components/ui/text-animate';
 import { Breadcrumbs } from './Breadcrumbs';
-import { X, Plus } from 'lucide-react';
+import { X, Plus, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 
-// Mock данные
-const mockObjects = [
-  { id: 1, name: 'Кран подвесной', pipeline: 'MT-02', year: 1961, material: 'Ст3', inspections: 5, defects: 1, criticality: 'medium' },
-  { id: 2, name: 'Турбокомпрессор ТВ-80-1', pipeline: 'MT-02', year: 1999, material: '09Г2С', inspections: 8, defects: 0, criticality: 'normal' },
-  { id: 3, name: 'Участок трубы №45', pipeline: 'MT-01', year: 1985, material: '17Г1С', inspections: 12, defects: 3, criticality: 'high' },
-];
+interface CompareObject {
+  id: number;
+  name: string;
+  pipeline: string;
+  year: number;
+  material: string;
+  inspections: number;
+  defects: number;
+  criticality: 'normal' | 'medium' | 'high';
+}
 
 export function CompareView() {
-  const [selectedObjects, setSelectedObjects] = useState<number[]>([1, 2]);
+  const [selectedObjects, setSelectedObjects] = useState<number[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [objects, setObjects] = useState<CompareObject[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const availableObjects = mockObjects.filter(
+  useEffect(() => {
+    const fetchObjects = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        
+        const response = await fetch('/api/objects?limit=100');
+        if (!response.ok) {
+          throw new Error('Failed to fetch objects');
+        }
+
+        const data = await response.json() as Array<{
+          id: number;
+          name: string;
+          pipeline: string;
+          year: number;
+          material: string;
+          inspections: number;
+          defects: number;
+          criticalDefects?: number;
+        }>;
+        // Transform to CompareObject format
+        const transformed = data.map((obj) => ({
+          id: obj.id,
+          name: obj.name,
+          pipeline: obj.pipeline,
+          year: obj.year,
+          material: obj.material,
+          inspections: obj.inspections,
+          defects: obj.defects,
+          criticality: ((obj.criticalDefects || 0) > 0 ? 'high' : obj.defects > 5 ? 'medium' : 'normal') as 'normal' | 'medium' | 'high',
+        }));
+        
+        setObjects(transformed);
+      } catch (err) {
+        console.error('Error fetching objects:', err);
+        setError('Не удалось загрузить объекты');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchObjects();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <Breadcrumbs items={[{ label: 'Сравнение объектов' }]} />
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 className="h-8 w-8 animate-spin" style={{ color: 'var(--color-blue)' }} />
+            <p style={{ fontFamily: 'var(--font-geist)', color: 'var(--color-blue)' }}>
+              Загрузка объектов...
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <Breadcrumbs items={[{ label: 'Сравнение объектов' }]} />
+        <div className="p-6 rounded-lg border" style={{ borderColor: '#dc2626', background: 'var(--color-white)' }}>
+          <p style={{ fontFamily: 'var(--font-geist)', color: '#dc2626' }}>
+            {error}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const availableObjects = objects.filter(
     (obj) => !selectedObjects.includes(obj.id) && obj.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const selectedObjectsData = mockObjects.filter((obj) => selectedObjects.includes(obj.id));
+  const selectedObjectsData = objects.filter((obj) => selectedObjects.includes(obj.id));
 
   const addObject = (id: number) => {
     if (selectedObjects.length < 4) {

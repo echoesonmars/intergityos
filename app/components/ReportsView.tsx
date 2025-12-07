@@ -23,11 +23,39 @@ export function ReportsView() {
     }, 2000);
   };
 
-  const handleExport = (format: 'excel' | 'csv') => {
-    showToast(`Экспорт данных в ${format.toUpperCase()}...`, 'info');
-    setTimeout(() => {
-      showToast(`Данные успешно экспортированы (${format.toUpperCase()})`, 'success');
-    }, 2000);
+  const handleExport = async (format: 'excel' | 'csv' | 'json') => {
+    try {
+      if (format === 'json') {
+        // Используем бэкенд API для экспорта JSON
+        showToast('Экспорт данных в JSON...', 'info');
+        
+        const response = await fetch('/api/export/json');
+        if (!response.ok) {
+          throw new Error('Failed to export data');
+        }
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'defects_export.json';
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+        showToast('Данные успешно экспортированы (JSON)', 'success');
+      } else {
+        // Excel и CSV пока через mock
+        showToast(`Экспорт данных в ${format.toUpperCase()}...`, 'info');
+        setTimeout(() => {
+          showToast(`Данные успешно экспортированы (${format.toUpperCase()})`, 'success');
+        }, 2000);
+      }
+    } catch (error) {
+      console.error('Export error:', error);
+      showToast('Ошибка при экспорте данных', 'error');
+    }
   };
 
   return (
@@ -132,6 +160,19 @@ export function ReportsView() {
               >
                 <FileDown className="w-4 h-4" />
                 Экспорт в CSV
+              </Button>
+              <Button
+                onClick={() => handleExport('json')}
+                variant="outline"
+                className="w-full flex items-center justify-center gap-2"
+                style={{
+                  fontFamily: 'var(--font-geist)',
+                  borderColor: 'var(--color-light-blue)',
+                  color: 'var(--color-dark-blue)',
+                }}
+              >
+                <Download className="w-4 h-4" />
+                Экспорт в JSON
               </Button>
             </div>
           </div>

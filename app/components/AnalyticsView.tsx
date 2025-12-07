@@ -1,29 +1,82 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { BlurFade } from '@/components/ui/blur-fade';
 import { TextAnimate } from '@/components/ui/text-animate';
 import { Breadcrumbs } from './Breadcrumbs';
 import { Select } from '@/components/ui/select';
-import { TrendingUp, TrendingDown, Calendar, BarChart3 } from 'lucide-react';
+import { TrendingUp, TrendingDown, Calendar, BarChart3, Loader2 } from 'lucide-react';
 
-// Mock данные для графиков
-const yearlyData = [
-  { year: 2020, inspections: 120, defects: 15 },
-  { year: 2021, inspections: 145, defects: 18 },
-  { year: 2022, inspections: 168, defects: 22 },
-  { year: 2023, inspections: 195, defects: 28 },
-  { year: 2024, inspections: 45, defects: 6 },
-];
-
-const pipelineComparison = [
-  { pipeline: 'MT-01', objects: 450, defects: 35, critical: 8 },
-  { pipeline: 'MT-02', objects: 520, defects: 42, critical: 12 },
-  { pipeline: 'MT-03', objects: 277, defects: 12, critical: 3 },
-];
+interface AnalyticsData {
+  trends: {
+    inspectionsGrowth: string;
+    defectsReduction: string;
+    plannedWorks: number;
+  };
+  yearlyData: Array<{ year: number; inspections: number; defects: number }>;
+  pipelineComparison: Array<{ pipeline: string; objects: number; defects: number; critical: number }>;
+}
 
 export function AnalyticsView() {
   const [selectedPeriod, setSelectedPeriod] = useState<'year' | 'quarter' | 'month'>('year');
+  const [data, setData] = useState<AnalyticsData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchAnalytics = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        
+        const response = await fetch(`/api/analytics?period=${selectedPeriod}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch analytics');
+        }
+
+        const analyticsData = await response.json();
+        setData(analyticsData);
+      } catch (err) {
+        console.error('Error fetching analytics:', err);
+        setError('Не удалось загрузить аналитику');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchAnalytics();
+  }, [selectedPeriod]);
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <Breadcrumbs items={[{ label: 'Аналитика' }]} />
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 className="h-8 w-8 animate-spin" style={{ color: 'var(--color-blue)' }} />
+            <p style={{ fontFamily: 'var(--font-geist)', color: 'var(--color-blue)' }}>
+              Загрузка аналитики...
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <div className="space-y-6">
+        <Breadcrumbs items={[{ label: 'Аналитика' }]} />
+        <div className="p-6 rounded-lg border" style={{ borderColor: '#dc2626', background: 'var(--color-white)' }}>
+          <p style={{ fontFamily: 'var(--font-geist)', color: '#dc2626' }}>
+            {error || 'Не удалось загрузить данные'}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const { trends, yearlyData, pipelineComparison } = data;
 
   return (
     <div className="space-y-6">
@@ -68,7 +121,7 @@ export function AnalyticsView() {
               </span>
             </div>
             <div className="text-2xl font-bold" style={{ fontFamily: 'var(--font-jost)', color: 'var(--color-dark-blue)' }}>
-              +23%
+              +{trends.inspectionsGrowth}%
             </div>
             <div className="text-xs mt-1" style={{ fontFamily: 'var(--font-geist)', color: 'var(--color-blue)' }}>
               За последний год
@@ -82,7 +135,7 @@ export function AnalyticsView() {
               </span>
             </div>
             <div className="text-2xl font-bold" style={{ fontFamily: 'var(--font-jost)', color: 'var(--color-dark-blue)' }}>
-              -12%
+              {trends.defectsReduction}%
             </div>
             <div className="text-xs mt-1" style={{ fontFamily: 'var(--font-geist)', color: 'var(--color-blue)' }}>
               За последний год
@@ -96,7 +149,7 @@ export function AnalyticsView() {
               </span>
             </div>
             <div className="text-2xl font-bold" style={{ fontFamily: 'var(--font-jost)', color: 'var(--color-dark-blue)' }}>
-              24
+              {trends.plannedWorks}
             </div>
             <div className="text-xs mt-1" style={{ fontFamily: 'var(--font-geist)', color: 'var(--color-blue)' }}>
               В этом месяце

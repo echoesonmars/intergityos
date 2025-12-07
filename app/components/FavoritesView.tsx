@@ -1,30 +1,96 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { BlurFade } from '@/components/ui/blur-fade';
 import { TextAnimate } from '@/components/ui/text-animate';
 import { Breadcrumbs } from './Breadcrumbs';
-import { Star, MapPin, Calendar, X } from 'lucide-react';
+import { Star, MapPin, Calendar, X, Loader2 } from 'lucide-react';
 import { useToast } from './ToastProvider';
 import { ConfirmDialog } from './ConfirmDialog';
 
-// Mock данные
-const mockFavorites = [
-  { id: 1, name: 'Кран подвесной', pipeline: 'MT-02', type: 'crane', addedDate: '2024-01-15' },
-  { id: 3, name: 'Участок трубы №45', pipeline: 'MT-01', type: 'pipeline_section', addedDate: '2024-01-10' },
-];
+interface Favorite {
+  id: number;
+  name: string;
+  pipeline: string;
+  type: string;
+  addedDate: string;
+}
 
 export function FavoritesView() {
   const { showToast } = useToast();
-  const [favorites, setFavorites] = useState(mockFavorites);
+  const [favorites, setFavorites] = useState<Favorite[]>([]);
   const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // Load favorites from localStorage (client-side only)
+    const loadFavorites = () => {
+      try {
+        const stored = localStorage.getItem('favorites');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          setFavorites(parsed);
+        } else {
+          // If no favorites in localStorage, try to get from objects API
+          fetch('/api/objects?limit=10')
+            .then(res => res.json())
+            .then((data: Array<{
+              id: number;
+              name: string;
+              pipeline: string;
+              type: string;
+            }>) => {
+              // Get first few objects as default favorites
+              const defaultFavorites = data.slice(0, 3).map((obj) => ({
+                id: obj.id,
+                name: obj.name,
+                pipeline: obj.pipeline,
+                type: obj.type,
+                addedDate: new Date().toISOString().split('T')[0],
+              }));
+              setFavorites(defaultFavorites);
+              localStorage.setItem('favorites', JSON.stringify(defaultFavorites));
+            })
+            .catch(() => {
+              // If API fails, use empty array
+              setFavorites([]);
+            });
+        }
+      } catch (error) {
+        console.error('Error loading favorites:', error);
+        setFavorites([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadFavorites();
+  }, []);
 
   const removeFavorite = (id: number) => {
-    setFavorites(favorites.filter((fav) => fav.id !== id));
+    const updated = favorites.filter((fav) => fav.id !== id);
+    setFavorites(updated);
+    localStorage.setItem('favorites', JSON.stringify(updated));
     setDeleteConfirm(null);
     showToast('Объект удален из избранного', 'info');
   };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <Breadcrumbs items={[{ label: 'Избранное' }]} />
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 className="h-8 w-8 animate-spin" style={{ color: 'var(--color-blue)' }} />
+            <p style={{ fontFamily: 'var(--font-geist)', color: 'var(--color-blue)' }}>
+              Загрузка избранного...
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

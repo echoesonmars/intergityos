@@ -1,51 +1,113 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { BlurFade } from '@/components/ui/blur-fade';
 import { TextAnimate } from '@/components/ui/text-animate';
 import { Breadcrumbs } from './Breadcrumbs';
-import { ArrowLeft, Calendar, MapPin, Wrench, FileText, AlertTriangle, Star } from 'lucide-react';
+import { ArrowLeft, Calendar, MapPin, Wrench, FileText, AlertTriangle, Star, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from './ToastProvider';
 
-// Mock данные
-const mockObject = {
-  id: 1,
-  name: 'Кран подвесной',
-  type: 'crane',
-  pipeline: 'MT-02',
-  lat: 52.96,
-  lon: 63.12,
-  year: 1961,
-  material: 'Ст3',
-  criticality: 'medium',
-  inspections: [
-    { id: 1, date: '2024-01-15', method: 'VIK', defectFound: true, qualityGrade: 'требует_мер', param1: 2.5, param2: 15, param3: 0.8 },
-    { id: 2, date: '2023-06-20', method: 'PVK', defectFound: false, qualityGrade: 'удовлетворительно', param1: 2.8, param2: 12, param3: 0.9 },
-    { id: 3, date: '2023-01-10', method: 'MPK', defectFound: true, qualityGrade: 'допустимо', param1: 2.6, param2: 14, param3: 0.85 },
-  ],
-  defects: [
-    { id: 1, date: '2024-01-15', description: 'Коррозия стенки', depth: 2.5, length: 15, width: 0.8, criticality: 'medium' },
-  ],
-  recommendations: ['Плановый ремонт в Q2 2024', 'Усиленный контроль'],
-};
+interface ObjectData {
+  id: number;
+  name: string;
+  type: string;
+  pipeline: string;
+  lat: number;
+  lon: number;
+  year: number;
+  material: string;
+  criticality: string;
+  inspections: Array<{
+    id: number;
+    date: string;
+    method: string;
+    defectFound: boolean;
+    qualityGrade: string;
+    param1: number;
+    param2: number;
+    param3: number;
+  }>;
+  defects: Array<{
+    id: number;
+    date: string;
+    description: string;
+    depth: number;
+    length: number;
+    width: number;
+    criticality: string;
+  }>;
+  recommendations: string[];
+}
 
 export function ObjectDetailView({ objectId }: { objectId: string }) {
   const { showToast } = useToast();
   const [isFavorite, setIsFavorite] = useState(false);
-  
-  // objectId используется для будущей загрузки данных объекта
-  // В будущем здесь будет загрузка данных объекта по ID
-  // Пока используем mock данные
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const _unused = objectId;
+  const [object, setObject] = useState<ObjectData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'overview' | 'history' | 'defects' | 'recommendations'>('overview');
+
+  useEffect(() => {
+    const fetchObject = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        
+        const response = await fetch(`/api/objects/${objectId}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch object');
+        }
+
+        const data = await response.json();
+        setObject(data);
+      } catch (err) {
+        console.error('Error fetching object:', err);
+        setError('Не удалось загрузить данные объекта');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (objectId) {
+      fetchObject();
+    }
+  }, [objectId]);
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <Breadcrumbs items={[{ label: 'Объекты', href: '/app/objects' }, { label: 'Загрузка...' }]} />
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 className="h-8 w-8 animate-spin" style={{ color: 'var(--color-blue)' }} />
+            <p style={{ fontFamily: 'var(--font-geist)', color: 'var(--color-blue)' }}>
+              Загрузка данных объекта...
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !object) {
+    return (
+      <div className="space-y-6">
+        <Breadcrumbs items={[{ label: 'Объекты', href: '/app/objects' }, { label: 'Ошибка' }]} />
+        <div className="p-6 rounded-lg border" style={{ borderColor: '#dc2626', background: 'var(--color-white)' }}>
+          <p style={{ fontFamily: 'var(--font-geist)', color: '#dc2626' }}>
+            {error || 'Объект не найден'}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   const toggleFavorite = () => {
     setIsFavorite(!isFavorite);
     showToast(isFavorite ? 'Удалено из избранного' : 'Добавлено в избранное', 'success');
   };
-  const [activeTab, setActiveTab] = useState<'overview' | 'history' | 'defects' | 'recommendations'>('overview');
 
   const getCriticalityColor = (criticality: string) => {
     switch (criticality) {
@@ -77,7 +139,7 @@ export function ObjectDetailView({ objectId }: { objectId: string }) {
     <div className="space-y-6">
       <Breadcrumbs items={[
         { label: 'Объекты', href: '/app/objects' },
-        { label: mockObject.name }
+        { label: object.name }
       ]} />
       <BlurFade delay={0.1}>
         <div className="flex items-center gap-4">
@@ -101,7 +163,7 @@ export function ObjectDetailView({ objectId }: { objectId: string }) {
               by="word"
               animation="blurInUp"
             >
-              {mockObject.name}
+              {object.name}
             </TextAnimate>
             <p className="text-base md:text-lg" style={{ fontFamily: 'var(--font-geist)', color: 'var(--color-blue)' }}>
               Детальная информация об объекте
@@ -132,7 +194,7 @@ export function ObjectDetailView({ objectId }: { objectId: string }) {
               </span>
             </div>
             <div className="text-lg font-semibold" style={{ fontFamily: 'var(--font-jost)', color: 'var(--color-dark-blue)' }}>
-              {mockObject.pipeline}
+              {object.pipeline}
             </div>
           </div>
           <div className="p-4 rounded-lg border" style={{ borderColor: 'var(--color-light-blue)', background: 'var(--color-white)' }}>
@@ -143,7 +205,7 @@ export function ObjectDetailView({ objectId }: { objectId: string }) {
               </span>
             </div>
             <div className="text-lg font-semibold" style={{ fontFamily: 'var(--font-jost)', color: 'var(--color-dark-blue)' }}>
-              {mockObject.year}
+              {object.year}
             </div>
           </div>
           <div className="p-4 rounded-lg border" style={{ borderColor: 'var(--color-light-blue)', background: 'var(--color-white)' }}>
@@ -151,7 +213,7 @@ export function ObjectDetailView({ objectId }: { objectId: string }) {
               Материал
             </div>
             <div className="text-lg font-semibold" style={{ fontFamily: 'var(--font-jost)', color: 'var(--color-dark-blue)' }}>
-              {mockObject.material}
+              {object.material}
             </div>
           </div>
           <div className="p-4 rounded-lg border" style={{ borderColor: 'var(--color-light-blue)', background: 'var(--color-white)' }}>
@@ -160,9 +222,9 @@ export function ObjectDetailView({ objectId }: { objectId: string }) {
             </div>
             <span
               className="inline-block px-3 py-1 rounded text-sm font-semibold text-white"
-              style={{ backgroundColor: getCriticalityColor(mockObject.criticality) }}
+              style={{ backgroundColor: getCriticalityColor(object.criticality) }}
             >
-              {getCriticalityLabel(mockObject.criticality)}
+              {getCriticalityLabel(object.criticality)}
             </span>
           </div>
         </div>
@@ -208,7 +270,7 @@ export function ObjectDetailView({ objectId }: { objectId: string }) {
                   Координаты:
                 </span>
                 <span className="ml-2" style={{ fontFamily: 'var(--font-geist)', color: 'var(--color-dark-blue)' }}>
-                  {mockObject.lat}, {mockObject.lon}
+                  {object.lat}, {object.lon}
                 </span>
               </div>
               <div>
@@ -216,7 +278,7 @@ export function ObjectDetailView({ objectId }: { objectId: string }) {
                   Всего обследований:
                 </span>
                 <span className="ml-2" style={{ fontFamily: 'var(--font-geist)', color: 'var(--color-dark-blue)' }}>
-                  {mockObject.inspections.length}
+                  {object.inspections.length}
                 </span>
               </div>
               <div>
@@ -224,7 +286,7 @@ export function ObjectDetailView({ objectId }: { objectId: string }) {
                   Найдено дефектов:
                 </span>
                 <span className="ml-2" style={{ fontFamily: 'var(--font-geist)', color: 'var(--color-dark-blue)' }}>
-                  {mockObject.defects.length}
+                  {object.defects.length}
                 </span>
               </div>
             </div>
@@ -239,7 +301,7 @@ export function ObjectDetailView({ objectId }: { objectId: string }) {
               История диагностик
             </h2>
             <div className="space-y-4">
-              {mockObject.inspections.map((insp) => (
+              {object.inspections.map((insp) => (
                 <div
                   key={insp.id}
                   className="p-4 rounded-lg border"
@@ -301,7 +363,7 @@ export function ObjectDetailView({ objectId }: { objectId: string }) {
               Дефекты
             </h2>
             <div className="space-y-4">
-              {mockObject.defects.map((defect) => (
+              {object.defects.map((defect) => (
                 <div
                   key={defect.id}
                   className="p-4 rounded-lg border"
@@ -363,7 +425,7 @@ export function ObjectDetailView({ objectId }: { objectId: string }) {
               Рекомендации
             </h2>
             <div className="space-y-3">
-              {mockObject.recommendations.map((rec, idx) => (
+              {object.recommendations.map((rec, idx) => (
                 <div
                   key={idx}
                   className="p-4 rounded-lg border flex items-start gap-3"

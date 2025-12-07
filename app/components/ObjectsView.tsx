@@ -1,32 +1,68 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { BlurFade } from '@/components/ui/blur-fade';
 import { TextAnimate } from '@/components/ui/text-animate';
 import { Breadcrumbs } from './Breadcrumbs';
 import { Select } from '@/components/ui/select';
+import { Loader2 } from 'lucide-react';
 
-// Mock данные
-const mockObjects = [
-  { id: 1, name: 'Кран подвесной', type: 'crane', pipeline: 'MT-02', year: 1961, material: 'Ст3', inspections: 5, defects: 1 },
-  { id: 2, name: 'Турбокомпрессор ТВ-80-1', type: 'compressor', pipeline: 'MT-02', year: 1999, material: '09Г2С', inspections: 8, defects: 0 },
-  { id: 3, name: 'Участок трубы №45', type: 'pipeline_section', pipeline: 'MT-01', year: 1985, material: '17Г1С', inspections: 12, defects: 3 },
-  { id: 4, name: 'Кран шаровой', type: 'crane', pipeline: 'MT-03', year: 2005, material: '09Г2С', inspections: 3, defects: 0 },
-  { id: 5, name: 'Компрессорная станция №2', type: 'compressor', pipeline: 'MT-01', year: 1995, material: 'Ст3', inspections: 15, defects: 2 },
-];
+interface Object {
+  id: number;
+  name: string;
+  type: string;
+  pipeline: string;
+  year: number;
+  material: string;
+  inspections: number;
+  defects: number;
+}
 
 export function ObjectsView() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedType, setSelectedType] = useState<string>('all');
   const [selectedPipeline, setSelectedPipeline] = useState<string>('all');
+  const [objects, setObjects] = useState<Object[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const filteredObjects = mockObjects.filter((obj) => {
+  useEffect(() => {
+    const fetchObjects = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        
+        const params = new URLSearchParams();
+        if (selectedPipeline !== 'all') {
+          params.append('pipeline', selectedPipeline);
+        }
+        if (selectedType !== 'all') {
+          params.append('type', selectedType);
+        }
+
+        const response = await fetch(`/api/objects?${params.toString()}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch objects');
+        }
+
+        const data = await response.json();
+        setObjects(data);
+      } catch (err) {
+        console.error('Error fetching objects:', err);
+        setError('Не удалось загрузить объекты');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchObjects();
+  }, [selectedType, selectedPipeline]);
+
+  const filteredObjects = objects.filter((obj) => {
     const matchesSearch = obj.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesType = selectedType === 'all' || obj.type === selectedType;
-    const matchesPipeline = selectedPipeline === 'all' || obj.pipeline === selectedPipeline;
-    return matchesSearch && matchesType && matchesPipeline;
+    return matchesSearch;
   });
 
   const typeLabels: Record<string, string> = {
@@ -34,6 +70,35 @@ export function ObjectsView() {
     compressor: 'Компрессор',
     pipeline_section: 'Участок трубы',
   };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <Breadcrumbs items={[{ label: 'Объекты' }]} />
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 className="h-8 w-8 animate-spin" style={{ color: 'var(--color-blue)' }} />
+            <p style={{ fontFamily: 'var(--font-geist)', color: 'var(--color-blue)' }}>
+              Загрузка объектов...
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <Breadcrumbs items={[{ label: 'Объекты' }]} />
+        <div className="p-6 rounded-lg border" style={{ borderColor: '#dc2626', background: 'var(--color-white)' }}>
+          <p style={{ fontFamily: 'var(--font-geist)', color: '#dc2626' }}>
+            {error}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

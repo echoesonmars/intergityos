@@ -1,31 +1,90 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { BlurFade } from '@/components/ui/blur-fade';
 import { TextAnimate } from '@/components/ui/text-animate';
 import { Breadcrumbs } from './Breadcrumbs';
-import { Brain, TrendingUp, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
+import { Brain, TrendingUp, AlertTriangle, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from './ToastProvider';
 
-// Mock данные для демонстрации
-const mockAnalysis = {
-  totalAnalyzed: 1247,
-  normal: 856,
-  medium: 302,
-  high: 89,
-  modelAccuracy: 94.2,
-  lastTraining: '2024-01-15',
-  predictions: [
-    { objectId: 1, objectName: 'Кран подвесной', currentRisk: 'medium', predictedRisk: 'high', confidence: 87, factors: ['Возраст > 60 лет', 'Дефекты найдены', 'Низкая толщина стенки'] },
-    { objectId: 2, objectName: 'Турбокомпрессор ТВ-80-1', currentRisk: 'normal', predictedRisk: 'normal', confidence: 92, factors: ['Нормальная толщина', 'Нет дефектов'] },
-    { objectId: 3, objectName: 'Участок трубы №45', currentRisk: 'high', predictedRisk: 'high', confidence: 95, factors: ['Критические дефекты', 'Высокий износ', 'Требуется ремонт'] },
-  ],
-};
+interface AIAnalysisData {
+  totalAnalyzed: number;
+  normal: number;
+  medium: number;
+  high: number;
+  modelAccuracy: string;
+  lastTraining: string;
+  algorithm: string;
+  predictions: Array<{
+    objectId: number;
+    objectName: string;
+    currentRisk: string;
+    predictedRisk: string;
+    confidence: number;
+    factors: string[];
+  }>;
+}
 
 export function AIAnalysisView() {
   const { showToast } = useToast();
   const [isTraining, setIsTraining] = useState(false);
+  const [data, setData] = useState<AIAnalysisData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchAIAnalysis = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        
+        const response = await fetch('/api/ai-analysis');
+        if (!response.ok) {
+          throw new Error('Failed to fetch AI analysis');
+        }
+
+        const analysisData = await response.json();
+        setData(analysisData);
+      } catch (err) {
+        console.error('Error fetching AI analysis:', err);
+        setError('Не удалось загрузить AI анализ');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchAIAnalysis();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <Breadcrumbs items={[{ label: 'AI-анализ' }]} />
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 className="h-8 w-8 animate-spin" style={{ color: 'var(--color-blue)' }} />
+            <p style={{ fontFamily: 'var(--font-geist)', color: 'var(--color-blue)' }}>
+              Загрузка AI анализа...
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <div className="space-y-6">
+        <Breadcrumbs items={[{ label: 'AI-анализ' }]} />
+        <div className="p-6 rounded-lg border" style={{ borderColor: '#dc2626', background: 'var(--color-white)' }}>
+          <p style={{ fontFamily: 'var(--font-geist)', color: '#dc2626' }}>
+            {error || 'Не удалось загрузить данные'}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   const handleTrainModel = () => {
     setIsTraining(true);
@@ -107,7 +166,7 @@ export function AIAnalysisView() {
               </span>
             </div>
             <div className="text-2xl font-bold" style={{ fontFamily: 'var(--font-jost)', color: 'var(--color-dark-blue)' }}>
-              {mockAnalysis.modelAccuracy}%
+              {data.modelAccuracy}%
             </div>
           </div>
           <div className="p-4 rounded-lg border" style={{ borderColor: 'var(--color-light-blue)', background: 'var(--color-white)' }}>
@@ -115,7 +174,7 @@ export function AIAnalysisView() {
               Проанализировано
             </div>
             <div className="text-2xl font-bold" style={{ fontFamily: 'var(--font-jost)', color: 'var(--color-dark-blue)' }}>
-              {mockAnalysis.totalAnalyzed}
+              {data.totalAnalyzed}
             </div>
           </div>
           <div className="p-4 rounded-lg border" style={{ borderColor: 'var(--color-light-blue)', background: 'var(--color-white)' }}>
@@ -123,7 +182,7 @@ export function AIAnalysisView() {
               Последнее обучение
             </div>
             <div className="text-sm font-semibold" style={{ fontFamily: 'var(--font-geist)', color: 'var(--color-dark-blue)' }}>
-              {mockAnalysis.lastTraining}
+              {data.lastTraining}
             </div>
           </div>
           <div className="p-4 rounded-lg border" style={{ borderColor: 'var(--color-light-blue)', background: 'var(--color-white)' }}>
@@ -131,7 +190,7 @@ export function AIAnalysisView() {
               Алгоритм
             </div>
             <div className="text-sm font-semibold" style={{ fontFamily: 'var(--font-geist)', color: 'var(--color-dark-blue)' }}>
-              Random Forest
+              {data.algorithm}
             </div>
           </div>
         </div>
@@ -151,7 +210,7 @@ export function AIAnalysisView() {
                   Норма
                 </div>
                 <div className="text-2xl font-bold" style={{ fontFamily: 'var(--font-jost)', color: 'var(--color-dark-blue)' }}>
-                  {mockAnalysis.normal}
+                  {data.normal}
                 </div>
               </div>
             </div>
@@ -162,7 +221,7 @@ export function AIAnalysisView() {
                   Средняя
                 </div>
                 <div className="text-2xl font-bold" style={{ fontFamily: 'var(--font-jost)', color: 'var(--color-dark-blue)' }}>
-                  {mockAnalysis.medium}
+                  {data.medium}
                 </div>
               </div>
             </div>
@@ -173,7 +232,7 @@ export function AIAnalysisView() {
                   Высокая
                 </div>
                 <div className="text-2xl font-bold" style={{ fontFamily: 'var(--font-jost)', color: 'var(--color-dark-blue)' }}>
-                  {mockAnalysis.high}
+                  {data.high}
                 </div>
               </div>
             </div>
@@ -188,7 +247,7 @@ export function AIAnalysisView() {
             Прогнозы критичности
           </h2>
           <div className="space-y-4">
-            {mockAnalysis.predictions.map((pred) => (
+            {data.predictions.map((pred) => (
               <div
                 key={pred.objectId}
                 className="p-4 rounded-lg border"

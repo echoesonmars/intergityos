@@ -5,54 +5,28 @@ import { useRouter } from 'next/navigation';
 import { BlurFade } from '@/components/ui/blur-fade';
 import { TextAnimate } from '@/components/ui/text-animate';
 import { Breadcrumbs } from './Breadcrumbs';
-import { Bell, AlertTriangle, CheckCircle, Info, X } from 'lucide-react';
+import { Bell, AlertTriangle, CheckCircle, Info, X, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from './ConfirmDialog';
 
-// Mock данные уведомлений
-const mockNotifications = [
-  {
-    id: 1,
-    type: 'critical',
-    title: 'Критический дефект обнаружен',
-    message: 'Объект "Кран подвесной" требует немедленного внимания',
-    date: '2024-01-20 14:30',
-    read: false,
-    objectId: 1,
-  },
-  {
-    id: 2,
-    type: 'warning',
-    title: 'Плановое обследование',
-    message: 'Напоминание: обследование объекта "Турбокомпрессор ТВ-80-1" запланировано на завтра',
-    date: '2024-01-20 10:15',
-    read: false,
-    objectId: 2,
-  },
-  {
-    id: 3,
-    type: 'info',
-    title: 'Новые данные импортированы',
-    message: 'Успешно импортировано 45 записей из файла Diagnostics.csv',
-    date: '2024-01-19 16:45',
-    read: true,
-  },
-  {
-    id: 4,
-    type: 'success',
-    title: 'Ремонт завершен',
-    message: 'Ремонтные работы на объекте "Участок трубы №45" успешно завершены',
-    date: '2024-01-18 09:20',
-    read: true,
-    objectId: 3,
-  },
-];
+interface Notification {
+  id: number;
+  type: 'critical' | 'warning' | 'info' | 'success';
+  title: string;
+  message: string;
+  date: string;
+  read: boolean;
+  objectId?: number;
+  defectId?: string;
+}
 
 export function NotificationsView() {
   const router = useRouter();
-  const [notifications, setNotifications] = useState(mockNotifications);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [filter, setFilter] = useState<'all' | 'unread' | 'critical'>('all');
   const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -61,6 +35,30 @@ export function NotificationsView() {
       setFilter(filterParam);
     }
   }, []);
+
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        
+        const response = await fetch(`/api/notifications?filter=${filter}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch notifications');
+        }
+
+        const data = await response.json();
+        setNotifications(data);
+      } catch (err) {
+        console.error('Error fetching notifications:', err);
+        setError('Не удалось загрузить уведомления');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchNotifications();
+  }, [filter]);
 
   const getIcon = (type: string) => {
     switch (type) {
@@ -75,11 +73,7 @@ export function NotificationsView() {
     }
   };
 
-  const filteredNotifications = notifications.filter((notif) => {
-    if (filter === 'unread') return !notif.read;
-    if (filter === 'critical') return notif.type === 'critical';
-    return true;
-  });
+  // Filtering is done on backend, but we can also filter here if needed
 
   const markAsRead = (id: number) => {
     setNotifications((prev) =>
@@ -93,6 +87,35 @@ export function NotificationsView() {
   };
 
   const unreadCount = notifications.filter((n) => !n.read).length;
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <Breadcrumbs items={[{ label: 'Уведомления' }]} />
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 className="h-8 w-8 animate-spin" style={{ color: 'var(--color-blue)' }} />
+            <p style={{ fontFamily: 'var(--font-geist)', color: 'var(--color-blue)' }}>
+              Загрузка уведомлений...
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <Breadcrumbs items={[{ label: 'Уведомления' }]} />
+        <div className="p-6 rounded-lg border" style={{ borderColor: '#dc2626', background: 'var(--color-white)' }}>
+          <p style={{ fontFamily: 'var(--font-geist)', color: '#dc2626' }}>
+            {error}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -151,7 +174,14 @@ export function NotificationsView() {
       {/* Список уведомлений */}
       <BlurFade delay={0.3}>
         <div className="space-y-3">
-          {filteredNotifications.map((notif) => (
+          {notifications.length === 0 ? (
+            <div className="p-6 rounded-lg border text-center" style={{ borderColor: 'var(--color-light-blue)', background: 'var(--color-white)' }}>
+              <p style={{ fontFamily: 'var(--font-geist)', color: 'var(--color-blue)' }}>
+                Нет уведомлений
+              </p>
+            </div>
+          ) : (
+            notifications.map((notif) => (
             <div
               key={notif.id}
               className={`p-4 rounded-lg border flex items-start gap-3 ${
@@ -212,7 +242,8 @@ export function NotificationsView() {
                 </div>
               </div>
             </div>
-          ))}
+            ))
+          )}
         </div>
       </BlurFade>
 

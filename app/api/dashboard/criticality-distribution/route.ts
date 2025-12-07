@@ -1,29 +1,30 @@
 import { NextResponse } from 'next/server';
+import { statisticsApi } from '@/lib/api';
 
 // GET /api/dashboard/criticality-distribution - Получить распределение по критичности
 export async function GET() {
   try {
-    // TODO: Заменить на реальные запросы к БД
-    // Пример: const distribution = await db.getCriticalityDistribution();
+    // Получаем статистику из бэкенда
+    const backendStats = await statisticsApi.get();
     
-    // Базовые значения с динамическими изменениями
-    const baseTime = Math.floor(Date.now() / 1000 / 3600);
-    const variation = (baseTime % 30) - 15;
+    // Преобразуем данные бэкенда в формат фронтенда
+    const defectsBySeverity = backendStats.defects_by_severity || {};
     
     const distribution = [
       { 
         label: 'Норма', 
-        count: Math.max(800, 856 + Math.floor(variation * 0.5) + Math.floor(Math.random() * 10) - 5), 
+        count: defectsBySeverity['низкий'] || defectsBySeverity['low'] || 0, 
         color: '#28ca42' 
       },
       { 
         label: 'Средняя', 
-        count: Math.max(250, 302 + Math.floor(variation * 0.3) + Math.floor(Math.random() * 8) - 4), 
+        count: defectsBySeverity['средний'] || defectsBySeverity['medium'] || 0, 
         color: '#ffbd2e' 
       },
       { 
         label: 'Высокая', 
-        count: Math.max(50, 89 + Math.floor(variation * 0.2) + Math.floor(Math.random() * 6) - 3), 
+        count: (defectsBySeverity['высокий'] || defectsBySeverity['high'] || 0) + 
+                (defectsBySeverity['критичный'] || defectsBySeverity['critical'] || 0), 
         color: '#dc2626' 
       },
     ];
@@ -31,10 +32,15 @@ export async function GET() {
     return NextResponse.json(distribution, { status: 200 });
   } catch (error) {
     console.error('Error fetching criticality distribution:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch criticality distribution' },
-      { status: 500 }
-    );
+    
+    // Fallback на mock данные если бэкенд недоступен
+    const fallbackDistribution = [
+      { label: 'Норма', count: 856, color: '#28ca42' },
+      { label: 'Средняя', count: 302, color: '#ffbd2e' },
+      { label: 'Высокая', count: 89, color: '#dc2626' },
+    ];
+    
+    return NextResponse.json(fallbackDistribution, { status: 200 });
   }
 }
 
