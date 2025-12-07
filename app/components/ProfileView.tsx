@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { BlurFade } from '@/components/ui/blur-fade';
-import { TextAnimate } from '@/components/ui/text-animate';
 import { Breadcrumbs } from './Breadcrumbs';
 import { User, Mail, Phone, Building, Save, Edit2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -51,15 +50,12 @@ export function ProfileView() {
       <BlurFade delay={0.1}>
         <div className="flex items-center justify-between">
           <div>
-            <TextAnimate
-              as="h1"
+            <h1
               className="text-3xl md:text-4xl font-bold mb-2"
               style={{ fontFamily: 'var(--font-jost)', color: 'var(--color-dark-blue)' }}
-              by="word"
-              animation="blurInUp"
             >
               Профиль
-            </TextAnimate>
+            </h1>
             <p className="text-base md:text-lg" style={{ fontFamily: 'var(--font-geist)', color: 'var(--color-blue)' }}>
               Управление личными данными и настройками
             </p>

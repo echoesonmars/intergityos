@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { BlurFade } from '@/components/ui/blur-fade';
-import { TextAnimate } from '@/components/ui/text-animate';
 import { FileUpload } from '@/components/ui/file-upload';
 import { Breadcrumbs } from './Breadcrumbs';
 import { useToast } from './ToastProvider';
@@ -75,15 +74,12 @@ export function ImportView() {
       <Breadcrumbs items={[{ label: 'Импорт данных' }]} />
       <BlurFade delay={0.1}>
         <div>
-          <TextAnimate
-            as="h1"
+          <h1
             className="text-3xl md:text-4xl font-bold mb-2"
             style={{ fontFamily: 'var(--font-jost)', color: 'var(--color-dark-blue)' }}
-            by="word"
-            animation="blurInUp"
           >
             Импорт данных
-          </TextAnimate>
+          </h1>
           <p className="text-base md:text-lg" style={{ fontFamily: 'var(--font-geist)', color: 'var(--color-blue)' }}>
             Загрузите CSV или XLSX файлы с данными объектов и диагностик
           </p>

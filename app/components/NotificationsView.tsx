@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { BlurFade } from '@/components/ui/blur-fade';
-import { TextAnimate } from '@/components/ui/text-animate';
 import { Breadcrumbs } from './Breadcrumbs';
 import { Bell, AlertTriangle, CheckCircle, Info, X, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -123,15 +122,12 @@ export function NotificationsView() {
       <BlurFade delay={0.1}>
         <div className="flex items-center justify-between">
           <div>
-            <TextAnimate
-              as="h1"
+            <h1
               className="text-3xl md:text-4xl font-bold mb-2"
               style={{ fontFamily: 'var(--font-jost)', color: 'var(--color-dark-blue)' }}
-              by="word"
-              animation="blurInUp"
             >
               Уведомления
-            </TextAnimate>
+            </h1>
             <p className="text-base md:text-lg" style={{ fontFamily: 'var(--font-geist)', color: 'var(--color-blue)' }}>
               {unreadCount > 0 ? `${unreadCount} непрочитанных уведомлений` : 'Все уведомления прочитаны'}
             </p>

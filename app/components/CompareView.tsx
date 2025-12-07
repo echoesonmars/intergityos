@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { BlurFade } from '@/components/ui/blur-fade';
-import { TextAnimate } from '@/components/ui/text-animate';
 import { Breadcrumbs } from './Breadcrumbs';
 import { X, Plus, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -120,15 +119,12 @@ export function CompareView() {
       <Breadcrumbs items={[{ label: 'Сравнение объектов' }]} />
       <BlurFade delay={0.1}>
         <div>
-          <TextAnimate
-            as="h1"
+          <h1
             className="text-3xl md:text-4xl font-bold mb-2"
             style={{ fontFamily: 'var(--font-jost)', color: 'var(--color-dark-blue)' }}
-            by="word"
-            animation="blurInUp"
           >
             Сравнение объектов
-          </TextAnimate>
+          </h1>
           <p className="text-base md:text-lg" style={{ fontFamily: 'var(--font-geist)', color: 'var(--color-blue)' }}>
             Сравнение параметров нескольких объектов
           </p>

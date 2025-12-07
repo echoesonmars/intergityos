@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { BlurFade } from '@/components/ui/blur-fade';
-import { TextAnimate } from '@/components/ui/text-animate';
 import { Breadcrumbs } from './Breadcrumbs';
 import { Select } from '@/components/ui/select';
 import { Loader2 } from 'lucide-react';
@@ -105,15 +104,12 @@ export function ObjectsView() {
       <Breadcrumbs items={[{ label: 'Объекты' }]} />
       <BlurFade delay={0.1}>
         <div>
-          <TextAnimate
-            as="h1"
+          <h1
             className="text-3xl md:text-4xl font-bold mb-2"
             style={{ fontFamily: 'var(--font-jost)', color: 'var(--color-dark-blue)' }}
-            by="word"
-            animation="blurInUp"
           >
             Объекты контроля
-          </TextAnimate>
+          </h1>
           <p className="text-base md:text-lg" style={{ fontFamily: 'var(--font-geist)', color: 'var(--color-blue)' }}>
             Список объектов с фильтрацией и поиском
           </p>
