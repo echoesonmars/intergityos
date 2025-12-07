@@ -12,7 +12,7 @@ export async function GET(request: Request) {
     // For now, we'll try to call backend directly
     // In production, you should get token from session/cookies
     
-    const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:8000';
+    const API_BASE_URL = process.env.API_BASE_URL || 'http://127.0.0.1:8000';
     
     // Try to get token from Authorization header
     const authHeader = request.headers.get('Authorization');

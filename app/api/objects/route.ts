@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
-import { defectsApi } from '@/lib/api';
 
 export const dynamic = 'force-dynamic';
+
+const BACKEND_URL = process.env.API_BASE_URL || 'http://127.0.0.1:8000';
 
 /**
  * GET /api/objects - Get all objects (segments) with defects count
@@ -13,10 +14,11 @@ export async function GET(request: Request) {
     const type = searchParams.get('type');
     const limit = parseInt(searchParams.get('limit') || '100');
 
-    // Get all defects to group by segment
-    const defectsResponse = await defectsApi.getAll({
-      limit: 1000, // Get all to properly count
-    });
+    // Get all defects to group by segment - fetch directly from backend
+    const response = await fetch(`${BACKEND_URL}/defects?limit=1000`);
+    const defectsResponse = await response.json();
+    
+    console.log(`[API Objects] Got ${defectsResponse.defects?.length || 0} defects from backend`);
 
     // Group defects by segment to create "objects"
     interface SegmentData {
@@ -41,7 +43,7 @@ export async function GET(request: Request) {
     
     const segmentMap = new Map<number, SegmentData>();
 
-    defectsResponse.defects.forEach((defect) => {
+    (defectsResponse.defects || []).forEach((defect: { segment_number?: number; pipeline_id?: string; details?: { severity?: string; location?: { latitude?: number; longitude?: number } }; severity?: string }) => {
       const segmentNum = defect.segment_number || 1;
       if (!segmentMap.has(segmentNum)) {
         segmentMap.set(segmentNum, {

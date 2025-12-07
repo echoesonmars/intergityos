@@ -22,50 +22,59 @@ export function ImportView() {
     setUploadProgress(0);
 
     try {
-      // Upload files to server (in future, implement file upload endpoint)
-      // For now, we'll simulate upload and then reload data
-      
-      // Simulate upload progress
-      const interval = setInterval(() => {
-        setUploadProgress((prev) => {
-          if (prev >= 90) {
-            clearInterval(interval);
-            return 90;
-          }
-          return prev + 10;
-        });
-      }, 200);
-
-      // After upload, reload data from backend
-      // Note: This requires authentication, so we'll call our API route
-      const reloadResponse = await fetch('/api/admin/reload', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+      // Create FormData and append files
+      const formData = new FormData();
+      files.forEach((file) => {
+        formData.append('files', file);
       });
 
-      clearInterval(interval);
+      // Show progress
+      setUploadProgress(30);
+      setUploadStatus('Отправка файлов на сервер...');
+
+      // Upload files to backend
+      const uploadResponse = await fetch('/api/admin/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      setUploadProgress(70);
+      setUploadStatus('Обработка данных...');
+
+      if (!uploadResponse.ok) {
+        const errorData = await uploadResponse.json();
+        throw new Error(errorData.detail || 'Upload failed');
+      }
+
+      const result = await uploadResponse.json();
       setUploadProgress(100);
 
-      if (reloadResponse.ok) {
-        const result = await reloadResponse.json();
-        setIsUploading(false);
-        setUploadStatus(`Успешно загружено ${files.length} файл(ов). Импортировано ${result.inserted || 0} дефектов`);
-        showToast(`Успешно импортировано ${result.inserted || 0} дефектов`, 'success');
-        
-        // Redirect to objects after 2 seconds
-        setTimeout(() => {
-          router.push('/app/objects');
-        }, 2000);
-      } else {
-        throw new Error('Failed to reload data');
+      setIsUploading(false);
+      
+      const successMessage = `Успешно загружено ${files.length} файл(ов). Импортировано ${result.inserted || 0} дефектов из ${result.total_parsed || 0} распарсенных`;
+      setUploadStatus(successMessage);
+      showToast(successMessage, 'success');
+
+      // Show file details if available
+      if (result.files && result.files.length > 0) {
+        console.log('Processed files:', result.files);
       }
+      
+      // Show errors if any
+      if (result.errors && result.errors.length > 0) {
+        console.warn('Import errors:', result.errors);
+      }
+      
+      // Redirect to objects after 2 seconds
+      setTimeout(() => {
+        router.push('/app/objects');
+      }, 2000);
     } catch (error) {
       console.error('Import error:', error);
       setIsUploading(false);
-      setUploadStatus('Ошибка при импорте данных');
-      showToast('Ошибка при импорте данных. Проверьте подключение к серверу.', 'error');
+      const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
+      setUploadStatus(`Ошибка при импорте: ${errorMessage}`);
+      showToast('Ошибка при импорте данных. Проверьте формат файла.', 'error');
     }
   };
 

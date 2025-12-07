@@ -12,12 +12,14 @@ interface AIAnalysisData {
   normal: number;
   medium: number;
   high: number;
+  defectsWithoutSeverity?: number;
   modelAccuracy: string;
   lastTraining: string;
   algorithm: string;
   predictions: Array<{
     objectId: number;
     objectName: string;
+    defectId?: string;
     currentRisk: string;
     predictedRisk: string;
     confidence: number;
@@ -27,34 +29,60 @@ interface AIAnalysisData {
 
 export function AIAnalysisView() {
   const { showToast } = useToast();
-  const [isTraining, setIsTraining] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [data, setData] = useState<AIAnalysisData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchAIAnalysis = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-        
-        const response = await fetch('/api/ai-analysis');
-        if (!response.ok) {
-          throw new Error('Failed to fetch AI analysis');
-        }
-
-        const analysisData = await response.json();
-        setData(analysisData);
-      } catch (err) {
-        console.error('Error fetching AI analysis:', err);
-        setError('Не удалось загрузить AI анализ');
-      } finally {
-        setIsLoading(false);
+  const fetchData = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      const response = await fetch('/api/ai-analysis');
+      if (!response.ok) {
+        throw new Error('Failed to fetch AI analysis');
       }
-    };
 
-    fetchAIAnalysis();
+      const analysisData = await response.json();
+      setData(analysisData);
+    } catch (err) {
+      console.error('Error fetching AI analysis:', err);
+      setError('Не удалось загрузить AI анализ');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
   }, []);
+
+  const handleRunAnalysis = async () => {
+    setIsAnalyzing(true);
+    try {
+      const response = await fetch('/api/ai-analysis', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'predict_all' }),
+      });
+      
+      const result = await response.json();
+      
+      if (response.ok && result.success) {
+        showToast(result.message || 'Анализ завершён!', 'success');
+        // Refresh data
+        await fetchData();
+      } else {
+        showToast(result.error || 'Ошибка анализа', 'error');
+      }
+    } catch (err) {
+      console.error('Error running analysis:', err);
+      showToast('Ошибка при запуске анализа', 'error');
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -84,14 +112,6 @@ export function AIAnalysisView() {
       </div>
     );
   }
-
-  const handleTrainModel = () => {
-    setIsTraining(true);
-    setTimeout(() => {
-      setIsTraining(false);
-      showToast('Модель успешно обучена!', 'success');
-    }, 3000);
-  };
 
   const getRiskColor = (risk: string) => {
     switch (risk) {
@@ -136,8 +156,8 @@ export function AIAnalysisView() {
             </p>
           </div>
           <Button
-            onClick={handleTrainModel}
-            disabled={isTraining}
+            onClick={handleRunAnalysis}
+            disabled={isAnalyzing}
             className="flex items-center gap-2"
             style={{
               fontFamily: 'var(--font-geist)',
@@ -145,8 +165,8 @@ export function AIAnalysisView() {
               color: 'var(--color-white)',
             }}
           >
-            <Brain className="h-4 w-4" />
-            {isTraining ? 'Обучение...' : 'Обучить модель'}
+            {isAnalyzing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Brain className="h-4 w-4" />}
+            {isAnalyzing ? 'Анализ...' : 'Запустить анализ'}
           </Button>
         </div>
       </BlurFade>
