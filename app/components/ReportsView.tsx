@@ -1,31 +1,93 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { BlurFade } from '@/components/ui/blur-fade';
 import { Breadcrumbs } from './Breadcrumbs';
 import { Select } from '@/components/ui/select';
-import { FileText, Download, FileSpreadsheet, FileDown } from 'lucide-react';
+import { FileText, Download, FileSpreadsheet, FileDown, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from './ToastProvider';
+
+interface Report {
+  name: string;
+  type: string;
+  format: string;
+  displayDate: string;
+  url: string;
+}
 
 export function ReportsView() {
   const { showToast } = useToast();
   const [reportType, setReportType] = useState<string>('summary');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [reports, setReports] = useState<Report[]>([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
 
-  const handleGenerateReport = (format: 'pdf' | 'html') => {
-    setIsGenerating(true);
-    showToast(`Генерация ${format.toUpperCase()} отчета...`, 'info');
-    setTimeout(() => {
-      setIsGenerating(false);
+  useEffect(() => {
+    loadReportsHistory();
+  }, []);
+
+  const loadReportsHistory = async () => {
+    try {
+      setIsLoadingHistory(true);
+      const response = await fetch('/api/reports/history');
+      if (!response.ok) {
+        throw new Error('Failed to load reports history');
+      }
+      const data = await response.json();
+      setReports(data.reports || []);
+    } catch (error) {
+      console.error('Error loading reports history:', error);
+    } finally {
+      setIsLoadingHistory(false);
+    }
+  };
+
+  const handleGenerateReport = async (format: 'pdf' | 'html') => {
+    try {
+      setIsGenerating(true);
+      showToast(`Генерация ${format.toUpperCase()} отчета...`, 'info');
+      
+      const response = await fetch(`/api/reports/generate?report_type=${reportType}&format=${format}`);
+      if (!response.ok) {
+        throw new Error('Failed to generate report');
+      }
+
+      const contentDisposition = response.headers.get('Content-Disposition');
+      let filename = `report.${format}`;
+      if (contentDisposition) {
+        const matches = contentDisposition.match(/filename=([^;]+)/);
+        if (matches) {
+          filename = matches[1].replace(/"/g, '');
+        }
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
       showToast(`Отчет успешно сгенерирован (${format.toUpperCase()})`, 'success');
-    }, 2000);
+      
+      setTimeout(() => {
+        loadReportsHistory();
+      }, 500);
+    } catch (error) {
+      console.error('Generation error:', error);
+      showToast('Ошибка при генерации отчета', 'error');
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   const handleExport = async (format: 'excel' | 'csv' | 'json') => {
     try {
       if (format === 'json') {
-        // Используем бэкенд API для экспорта JSON
         showToast('Экспорт данных в JSON...', 'info');
         
         const response = await fetch('/api/export/json');
@@ -54,6 +116,31 @@ export function ReportsView() {
     } catch (error) {
       console.error('Export error:', error);
       showToast('Ошибка при экспорте данных', 'error');
+    }
+  };
+
+  const handleDownloadReport = async (report: Report) => {
+    try {
+      const filename = report.name;
+      const response = await fetch(`/api/reports/download?filename=${encodeURIComponent(filename)}`);
+      if (!response.ok) {
+        throw new Error('Failed to download report');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      showToast('Отчет скачан успешно', 'success');
+    } catch (error) {
+      console.error('Download error:', error);
+      showToast('Ошибка при скачивании отчета', 'error');
     }
   };
 
@@ -107,7 +194,11 @@ export function ReportsView() {
                     color: 'var(--color-white)',
                   }}
                 >
-                  <FileText className="w-4 h-4" />
+                  {isGenerating ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <FileText className="w-4 h-4" />
+                  )}
                   PDF
                 </Button>
                 <Button
@@ -121,7 +212,11 @@ export function ReportsView() {
                     color: 'var(--color-dark-blue)',
                   }}
                 >
-                  <FileText className="w-4 h-4" />
+                  {isGenerating ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <FileText className="w-4 h-4" />
+                  )}
                   HTML
                 </Button>
               </div>
@@ -180,34 +275,46 @@ export function ReportsView() {
           <h2 className="text-lg font-semibold mb-4" style={{ fontFamily: 'var(--font-jost)', color: 'var(--color-dark-blue)' }}>
             Последние отчеты
           </h2>
-          <div className="space-y-2">
-            {[
-              { name: 'Отчет_2024_01_15.pdf', date: '15.01.2024', type: 'PDF' },
-              { name: 'Статистика_2024.html', date: '10.01.2024', type: 'HTML' },
-              { name: 'Дефекты_MT-02.pdf', date: '05.01.2024', type: 'PDF' },
-            ].map((report, index) => (
-              <div
-                key={index}
-                className="flex items-center justify-between p-3 rounded border"
-                style={{ borderColor: 'var(--color-light-blue)', background: 'var(--color-cream)' }}
-              >
-                <div className="flex items-center gap-2">
-                  <FileText className="w-5 h-5" style={{ color: 'var(--color-blue)' }} />
-                  <div>
-                    <div className="text-sm font-medium" style={{ fontFamily: 'var(--font-geist)', color: 'var(--color-dark-blue)' }}>
-                      {report.name}
-                    </div>
-                    <div className="text-xs" style={{ fontFamily: 'var(--font-geist)', color: 'var(--color-blue)' }}>
-                      {report.date} • {report.type}
+          {isLoadingHistory ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="w-6 h-6 animate-spin" style={{ color: 'var(--color-blue)' }} />
+            </div>
+          ) : reports.length > 0 ? (
+            <div className="space-y-2">
+              {reports.map((report, index) => (
+                <div
+                  key={index}
+                  className="flex items-center justify-between p-3 rounded border"
+                  style={{ borderColor: 'var(--color-light-blue)', background: 'var(--color-cream)' }}
+                >
+                  <div className="flex items-center gap-2">
+                    <FileText className="w-5 h-5" style={{ color: 'var(--color-blue)' }} />
+                    <div>
+                      <div className="text-sm font-medium" style={{ fontFamily: 'var(--font-geist)', color: 'var(--color-dark-blue)' }}>
+                        {report.name}
+                      </div>
+                      <div className="text-xs" style={{ fontFamily: 'var(--font-geist)', color: 'var(--color-blue)' }}>
+                        {report.displayDate} • {report.format}
+                      </div>
                     </div>
                   </div>
+                  <button
+                    onClick={() => handleDownloadReport(report)}
+                    className="p-2 rounded hover:bg-opacity-80 transition-colors"
+                    style={{ background: 'var(--color-dark-blue)' }}
+                  >
+                    <Download className="w-4 h-4" style={{ color: 'var(--color-white)' }} />
+                  </button>
                 </div>
-                <button className="p-2 rounded hover:bg-opacity-80 transition-colors" style={{ background: 'var(--color-dark-blue)' }}>
-                  <Download className="w-4 h-4" style={{ color: 'var(--color-white)' }} />
-                </button>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <p style={{ fontFamily: 'var(--font-geist)', color: 'var(--color-blue)' }}>
+                Отчетов еще не сгенерировано
+              </p>
+            </div>
+          )}
         </div>
       </BlurFade>
     </div>
