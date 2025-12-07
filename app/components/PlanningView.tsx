@@ -1,50 +1,58 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { BlurFade } from '@/components/ui/blur-fade';
 import { Breadcrumbs } from './Breadcrumbs';
-import { Calendar, Clock, User, CheckCircle } from 'lucide-react';
+import { Calendar, Clock, User, CheckCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from './ToastProvider';
 
-// Mock данные
-const mockTasks = [
-  {
-    id: 1,
-    title: 'Обследование крана подвесного',
-    objectName: 'Кран подвесной',
-    date: '2024-01-25',
-    time: '09:00',
-    assignedTo: 'Иванов И.И.',
-    status: 'planned',
-    method: 'VIK',
-  },
-  {
-    id: 2,
-    title: 'Плановый осмотр компрессора',
-    objectName: 'Турбокомпрессор ТВ-80-1',
-    date: '2024-01-26',
-    time: '14:00',
-    assignedTo: 'Петров П.П.',
-    status: 'in_progress',
-    method: 'PVK',
-  },
-  {
-    id: 3,
-    title: 'Диагностика участка трубы',
-    objectName: 'Участок трубы №45',
-    date: '2024-01-24',
-    time: '10:30',
-    assignedTo: 'Сидоров С.С.',
-    status: 'completed',
-    method: 'MPK',
-  },
-];
+interface Task {
+  task_id: string;
+  id?: number; // For compatibility
+  title: string;
+  object_name: string;
+  date: string;
+  time: string;
+  assigned_to: string;
+  status: 'planned' | 'in_progress' | 'completed' | 'cancelled';
+  method?: string;
+}
 
 export function PlanningView() {
   const { showToast } = useToast();
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
-  const [tasks, setTasks] = useState(mockTasks);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchTasks = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const response = await fetch(`/api/tasks?date=${selectedDate}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch tasks');
+        }
+        const data = await response.json();
+        // Transform backend tasks to frontend format
+        const transformedTasks = data.map((task: Task, index: number) => ({
+          ...task,
+          id: index + 1, // Add id for compatibility
+        }));
+        setTasks(transformedTasks);
+      } catch (err: unknown) {
+        console.error('Error fetching tasks:', err);
+        setError('Не удалось загрузить задачи');
+        setTasks([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchTasks();
+  }, [selectedDate]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -72,18 +80,52 @@ export function PlanningView() {
     }
   };
 
-  const handleStartTask = (taskId: number) => {
-    setTasks((prev) =>
-      prev.map((task) => (task.id === taskId ? { ...task, status: 'in_progress' as const } : task))
-    );
-    showToast('Задача начата', 'success');
+  const handleStartTask = async (taskId: string | number) => {
+    try {
+      const taskIdStr = typeof taskId === 'number' ? tasks.find(t => t.id === taskId)?.task_id || String(taskId) : taskId;
+      const response = await fetch(`/api/tasks/${taskIdStr}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'in_progress' }),
+      });
+      
+      if (response.ok) {
+        const updatedTask = await response.json();
+        setTasks((prev) =>
+          prev.map((task) => (task.task_id === taskIdStr ? { ...task, ...updatedTask, status: 'in_progress' as const } : task))
+        );
+        showToast('Задача начата', 'success');
+      } else {
+        throw new Error('Failed to update task');
+      }
+    } catch (error) {
+      console.error('Error starting task:', error);
+      showToast('Ошибка при обновлении задачи', 'error');
+    }
   };
 
-  const handleCompleteTask = (taskId: number) => {
-    setTasks((prev) =>
-      prev.map((task) => (task.id === taskId ? { ...task, status: 'completed' as const } : task))
-    );
-    showToast('Задача завершена', 'success');
+  const handleCompleteTask = async (taskId: string | number) => {
+    try {
+      const taskIdStr = typeof taskId === 'number' ? tasks.find(t => t.id === taskId)?.task_id || String(taskId) : taskId;
+      const response = await fetch(`/api/tasks/${taskIdStr}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'completed' }),
+      });
+      
+      if (response.ok) {
+        const updatedTask = await response.json();
+        setTasks((prev) =>
+          prev.map((task) => (task.task_id === taskIdStr ? { ...task, ...updatedTask, status: 'completed' as const } : task))
+        );
+        showToast('Задача завершена', 'success');
+      } else {
+        throw new Error('Failed to update task');
+      }
+    } catch (error) {
+      console.error('Error completing task:', error);
+      showToast('Ошибка при обновлении задачи', 'error');
+    }
   };
 
   return (
@@ -140,8 +182,30 @@ export function PlanningView() {
 
       {/* Список задач */}
       <BlurFade delay={0.3}>
-        <div className="space-y-3">
-          {tasks.map((task) => (
+        {isLoading ? (
+          <div className="flex items-center justify-center min-h-[200px]">
+            <div className="flex flex-col items-center gap-4">
+              <Loader2 className="h-8 w-8 animate-spin" style={{ color: 'var(--color-blue)' }} />
+              <p style={{ fontFamily: 'var(--font-geist)', color: 'var(--color-blue)' }}>
+                Загрузка задач...
+              </p>
+            </div>
+          </div>
+        ) : error ? (
+          <div className="p-6 rounded-lg border" style={{ borderColor: '#dc2626', background: 'var(--color-white)' }}>
+            <p style={{ fontFamily: 'var(--font-geist)', color: '#dc2626' }}>
+              {error}
+            </p>
+          </div>
+        ) : tasks.length === 0 ? (
+          <div className="p-6 rounded-lg border" style={{ borderColor: 'var(--color-light-blue)', background: 'var(--color-white)' }}>
+            <p style={{ fontFamily: 'var(--font-geist)', color: 'var(--color-blue)' }}>
+              На выбранную дату задач не найдено
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {tasks.map((task) => (
             <div
               key={task.id}
               className="p-4 rounded-lg border"
@@ -161,7 +225,7 @@ export function PlanningView() {
                     </span>
                   </div>
                   <div className="text-sm mb-1" style={{ fontFamily: 'var(--font-geist)', color: 'var(--color-blue)' }}>
-                    Объект: {task.objectName}
+                    Объект: {task.object_name}
                   </div>
                   <div className="flex items-center gap-4 text-sm" style={{ fontFamily: 'var(--font-geist)', color: 'var(--color-blue)' }}>
                     <div className="flex items-center gap-1">
@@ -174,11 +238,13 @@ export function PlanningView() {
                     </div>
                     <div className="flex items-center gap-1">
                       <User className="h-4 w-4" />
-                      {task.assignedTo}
+                      {task.assigned_to}
                     </div>
-                    <div className="text-xs px-2 py-1 rounded" style={{ background: 'var(--color-cream)', color: 'var(--color-dark-blue)' }}>
-                      {task.method}
-                    </div>
+                    {task.method && (
+                      <div className="text-xs px-2 py-1 rounded" style={{ background: 'var(--color-cream)', color: 'var(--color-dark-blue)' }}>
+                        {task.method}
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="flex gap-2">
@@ -186,7 +252,7 @@ export function PlanningView() {
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => handleStartTask(task.id)}
+                      onClick={() => handleStartTask(task.task_id || task.id || '')}
                       style={{
                         fontFamily: 'var(--font-geist)',
                         borderColor: 'var(--color-light-blue)',
@@ -200,7 +266,7 @@ export function PlanningView() {
                     <Button
                       size="sm"
                       className="flex items-center gap-1"
-                      onClick={() => handleCompleteTask(task.id)}
+                      onClick={() => handleCompleteTask(task.task_id || task.id || '')}
                       style={{
                         fontFamily: 'var(--font-geist)',
                         backgroundColor: '#28ca42',
@@ -217,8 +283,9 @@ export function PlanningView() {
                 </div>
               </div>
             </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </BlurFade>
     </div>
   );

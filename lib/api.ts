@@ -369,7 +369,7 @@ export const adminApi = {
       inserted: number;
       errors: number;
       error_log?: string;
-    }>('/reload', token, {
+    }>('/admin/reload', token, {
       method: 'POST',
     });
   },
@@ -378,7 +378,254 @@ export const adminApi = {
    * Clear all defects (admin only)
    */
   clear: async (token: string) => {
-    return authenticatedRequest<void>('/clear', token, {
+    return authenticatedRequest<void>('/admin/clear', token, {
+      method: 'DELETE',
+    });
+  },
+};
+
+// Type definitions for additional APIs
+export interface Task {
+  task_id: string;
+  title: string;
+  object_name: string;
+  object_id?: number;
+  date: string;
+  time: string;
+  assigned_to: string;
+  status: 'planned' | 'in_progress' | 'completed' | 'cancelled';
+  method?: string;
+  description?: string;
+  created_by: string;
+}
+
+export interface TaskCreate {
+  title: string;
+  object_name: string;
+  object_id?: number;
+  date: string;
+  time: string;
+  assigned_to: string;
+  method?: string;
+  description?: string;
+}
+
+export interface TaskUpdate {
+  title?: string;
+  object_name?: string;
+  object_id?: number;
+  date?: string;
+  time?: string;
+  assigned_to?: string;
+  status?: 'planned' | 'in_progress' | 'completed' | 'cancelled';
+  method?: string;
+  description?: string;
+}
+
+export interface AuditLog {
+  log_id: string;
+  timestamp: string;
+  username: string;
+  action: string;
+  entity_type: string;
+  entity_id?: string;
+  details?: Record<string, unknown>;
+  ip_address?: string;
+}
+
+export interface UserProfile {
+  username: string;
+  full_name: string;
+  email: string;
+  phone?: string;
+  organization?: string;
+  position?: string;
+  department?: string;
+}
+
+export interface UserProfileUpdate {
+  full_name?: string;
+  email?: string;
+  phone?: string;
+  organization?: string;
+  position?: string;
+  department?: string;
+}
+
+export interface UserSettings {
+  username: string;
+  theme: string;
+  language: string;
+  units: string;
+}
+
+export interface UserSettingsUpdate {
+  theme?: string;
+  language?: string;
+  units?: string;
+}
+
+export interface Favorite {
+  favorite_id: string;
+  username: string;
+  object_id: string;
+  object_name: string;
+  object_type: string;
+  pipeline_id: string;
+  added_at: string;
+}
+
+/**
+ * Tasks API
+ */
+export const tasksApi = {
+  /**
+   * Get all tasks
+   */
+  getAll: async (token: string, params?: { date?: string; status?: string }) => {
+    const queryParams = new URLSearchParams();
+    if (params?.date) queryParams.append('date', params.date);
+    if (params?.status) queryParams.append('status', params.status);
+    const query = queryParams.toString();
+    return authenticatedRequest<Task[]>(`/tasks${query ? `?${query}` : ''}`, token);
+  },
+
+  /**
+   * Get task by ID
+   */
+  getById: async (token: string, taskId: string) => {
+    return authenticatedRequest<Task>(`/tasks/${taskId}`, token);
+  },
+
+  /**
+   * Create task
+   */
+  create: async (token: string, data: TaskCreate) => {
+    return authenticatedRequest<Task>('/tasks', token, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  /**
+   * Update task
+   */
+  update: async (token: string, taskId: string, data: TaskUpdate) => {
+    return authenticatedRequest<Task>(`/tasks/${taskId}`, token, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  },
+
+  /**
+   * Delete task
+   */
+  delete: async (token: string, taskId: string) => {
+    return authenticatedRequest<void>(`/tasks/${taskId}`, token, {
+      method: 'DELETE',
+    });
+  },
+};
+
+/**
+ * Audit Logs API
+ */
+export const auditLogsApi = {
+  /**
+   * Get all audit logs
+   */
+  getAll: async (token: string, params?: { action?: string; entity_type?: string; limit?: number }) => {
+    const queryParams = new URLSearchParams();
+    if (params?.action) queryParams.append('action', params.action);
+    if (params?.entity_type) queryParams.append('entity_type', params.entity_type);
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+    const query = queryParams.toString();
+    return authenticatedRequest<AuditLog[]>(`/audit-logs${query ? `?${query}` : ''}`, token);
+  },
+
+  /**
+   * Create audit log entry
+   */
+  create: async (token: string, data: Omit<AuditLog, 'log_id' | 'timestamp'>) => {
+    return authenticatedRequest<AuditLog>('/audit-logs', token, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+};
+
+/**
+ * Users API
+ */
+export const usersApi = {
+  /**
+   * Get user profile
+   */
+  getProfile: async (token: string, username: string) => {
+    return authenticatedRequest<UserProfile>(`/users/profile?username=${username}`, token);
+  },
+
+  /**
+   * Update user profile
+   */
+  updateProfile: async (token: string, username: string, data: UserProfileUpdate) => {
+    return authenticatedRequest<boolean>(`/users/profile?username=${username}`, token, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  },
+
+  /**
+   * Get user settings
+   */
+  getSettings: async (token: string, username: string) => {
+    return authenticatedRequest<UserSettings>(`/users/settings?username=${username}`, token);
+  },
+
+  /**
+   * Update user settings
+   */
+  updateSettings: async (token: string, username: string, data: UserSettingsUpdate) => {
+    return authenticatedRequest<boolean>(`/users/settings?username=${username}`, token, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  },
+
+  /**
+   * List all users (admin only)
+   */
+  list: async (token: string) => {
+    return authenticatedRequest<UserProfile[]>('/users/list', token);
+  },
+};
+
+/**
+ * Favorites API
+ */
+export const favoritesApi = {
+  /**
+   * Get user favorites
+   */
+  getAll: async (token: string, username: string) => {
+    return authenticatedRequest<Favorite[]>(`/favorites?username=${username}`, token);
+  },
+
+  /**
+   * Add favorite
+   */
+  add: async (token: string, data: Omit<Favorite, 'favorite_id' | 'added_at'>) => {
+    return authenticatedRequest<Favorite>('/favorites', token, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  /**
+   * Remove favorite
+   */
+  remove: async (token: string, username: string, objectId: string) => {
+    return authenticatedRequest<void>(`/favorites/${objectId}?username=${username}`, token, {
       method: 'DELETE',
     });
   },

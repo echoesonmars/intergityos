@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { BlurFade } from '@/components/ui/blur-fade';
 import { Breadcrumbs } from './Breadcrumbs';
-import { User, Mail, Phone, Building, Save, Edit2 } from 'lucide-react';
+import { User, Mail, Phone, Building, Save, Edit2, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useToast } from './ToastProvider';
@@ -11,31 +11,92 @@ import { useToast } from './ToastProvider';
 export function ProfileView() {
   const { showToast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [originalData, setOriginalData] = useState({
-    fullName: 'Иванов Иван Иванович',
-    email: 'user@integrityos.kz',
-    phone: '+7 (700) 123-45-67',
-    organization: 'ТОО "Интегрити ОС"',
-    position: 'Инженер по диагностике',
-    department: 'Отдел технического контроля',
+    fullName: '',
+    email: '',
+    phone: '',
+    organization: '',
+    position: '',
+    department: '',
   });
   const [formData, setFormData] = useState({
-    fullName: 'Иванов Иван Иванович',
-    email: 'user@integrityos.kz',
-    phone: '+7 (700) 123-45-67',
-    organization: 'ТОО "Интегрити ОС"',
-    position: 'Инженер по диагностике',
-    department: 'Отдел технического контроля',
+    fullName: '',
+    email: '',
+    phone: '',
+    organization: '',
+    position: '',
+    department: '',
   });
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        setIsLoading(true);
+        const response = await fetch('/api/users/profile');
+        if (response.ok) {
+          const data = await response.json();
+          const profileData = {
+            fullName: data.full_name || '',
+            email: data.email || '',
+            phone: data.phone || '',
+            organization: data.organization || '',
+            position: data.position || '',
+            department: data.department || '',
+          };
+          setOriginalData(profileData);
+          setFormData(profileData);
+        }
+      } catch (error) {
+        console.error('Error fetching profile:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, []);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSave = () => {
-    setIsEditing(false);
-    setOriginalData(formData);
-    showToast('Профиль успешно обновлен', 'success');
+  const handleSave = async () => {
+    try {
+      const response = await fetch('/api/users/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          full_name: formData.fullName,
+          email: formData.email,
+          phone: formData.phone,
+          organization: formData.organization,
+          position: formData.position,
+          department: formData.department,
+        }),
+      });
+
+      if (response.ok) {
+        const updatedData = await response.json();
+        const profileData = {
+          fullName: updatedData.full_name || formData.fullName,
+          email: updatedData.email || formData.email,
+          phone: updatedData.phone || formData.phone,
+          organization: updatedData.organization || formData.organization,
+          position: updatedData.position || formData.position,
+          department: updatedData.department || formData.department,
+        };
+        setIsEditing(false);
+        setOriginalData(profileData);
+        setFormData(profileData);
+        showToast('Профиль успешно обновлен', 'success');
+      } else {
+        throw new Error('Failed to update profile');
+      }
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      showToast('Ошибка при обновлении профиля', 'error');
+    }
   };
 
   const handleCancel = () => {
@@ -103,23 +164,33 @@ export function ProfileView() {
         </div>
       </BlurFade>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Левая колонка - Аватар и основная информация */}
-        <BlurFade delay={0.2}>
-          <div className="lg:col-span-1">
-            <div className="p-6 rounded-lg border" style={{ borderColor: 'var(--color-light-blue)', background: 'var(--color-white)' }}>
-              <div className="flex flex-col items-center gap-4">
-                <div className="flex h-24 w-24 items-center justify-center rounded-full" style={{ backgroundColor: 'var(--color-dark-blue)' }}>
-                  <User className="h-12 w-12" style={{ color: 'var(--color-white)' }} />
-                </div>
-                <div className="text-center">
-                  <h2 className="text-xl font-semibold mb-1" style={{ fontFamily: 'var(--font-jost)', color: 'var(--color-dark-blue)' }}>
-                    {formData.fullName}
-                  </h2>
-                  <p className="text-sm" style={{ fontFamily: 'var(--font-geist)', color: 'var(--color-blue)' }}>
-                    {formData.position}
-                  </p>
-                </div>
+      {isLoading ? (
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 className="h-8 w-8 animate-spin" style={{ color: 'var(--color-blue)' }} />
+            <p style={{ fontFamily: 'var(--font-geist)', color: 'var(--color-blue)' }}>
+              Загрузка профиля...
+            </p>
+          </div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Левая колонка - Аватар и основная информация */}
+          <BlurFade delay={0.2}>
+            <div className="lg:col-span-1">
+              <div className="p-6 rounded-lg border" style={{ borderColor: 'var(--color-light-blue)', background: 'var(--color-white)' }}>
+                <div className="flex flex-col items-center gap-4">
+                  <div className="flex h-24 w-24 items-center justify-center rounded-full" style={{ backgroundColor: 'var(--color-dark-blue)' }}>
+                    <User className="h-12 w-12" style={{ color: 'var(--color-white)' }} />
+                  </div>
+                  <div className="text-center">
+                    <h2 className="text-xl font-semibold mb-1" style={{ fontFamily: 'var(--font-jost)', color: 'var(--color-dark-blue)' }}>
+                      {formData.fullName || 'Пользователь'}
+                    </h2>
+                    <p className="text-sm" style={{ fontFamily: 'var(--font-geist)', color: 'var(--color-blue)' }}>
+                      {formData.position || 'Должность не указана'}
+                    </p>
+                  </div>
                 <div className="w-full pt-4 border-t" style={{ borderColor: 'var(--color-light-blue)' }}>
                   <div className="space-y-3">
                     <div className="flex items-center gap-3">
@@ -292,7 +363,8 @@ export function ProfileView() {
             </div>
           </div>
         </BlurFade>
-      </div>
+        </div>
+      )}
     </div>
   );
 }
