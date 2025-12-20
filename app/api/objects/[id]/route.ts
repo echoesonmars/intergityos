@@ -48,8 +48,8 @@ export async function GET(
     
     // Get source file from defects (use the most common one or first one)
     const sourceFiles = defectsResponse.defects
-      .map(d => d.source_file)
-      .filter((f): f is string => f !== null && f !== undefined);
+      .map((d: { source_file?: string | null }) => d.source_file)
+      .filter((f: string | null | undefined): f is string => f !== null && f !== undefined);
     const sourceFile = sourceFiles.length > 0 ? sourceFiles[0] : undefined;
 
     // Calculate statistics

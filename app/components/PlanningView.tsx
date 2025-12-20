@@ -169,7 +169,7 @@ export function PlanningView() {
       });
 
       if (response.ok) {
-        const createdTask = await response.json();
+        await response.json();
         showToast('Задача создана', 'success');
         setShowCreateModal(false);
         setNewTask({
