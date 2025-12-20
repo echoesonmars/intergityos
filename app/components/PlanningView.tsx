@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { BlurFade } from '@/components/ui/blur-fade';
 import { Breadcrumbs } from './Breadcrumbs';
 import { Calendar, Clock, User, CheckCircle, Loader2 } from 'lucide-react';
@@ -26,33 +26,33 @@ export function PlanningView() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchTasks = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-        const response = await fetch(`/api/tasks?date=${selectedDate}`);
-        if (!response.ok) {
-          throw new Error('Failed to fetch tasks');
-        }
-        const data = await response.json();
-        // Transform backend tasks to frontend format
-        const transformedTasks = data.map((task: Task, index: number) => ({
-          ...task,
-          id: index + 1, // Add id for compatibility
-        }));
-        setTasks(transformedTasks);
-      } catch (err: unknown) {
-        console.error('Error fetching tasks:', err);
-        setError('Не удалось загрузить задачи');
-        setTasks([]);
-      } finally {
-        setIsLoading(false);
+  const fetchTasks = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const response = await fetch(`/api/tasks?date=${selectedDate}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch tasks');
       }
-    };
-
-    fetchTasks();
+      const data = await response.json();
+      // Transform backend tasks to frontend format
+      const transformedTasks = data.map((task: Task, index: number) => ({
+        ...task,
+        id: index + 1, // Add id for compatibility
+      }));
+      setTasks(transformedTasks);
+    } catch (err: unknown) {
+      console.error('Error fetching tasks:', err);
+      setError('Не удалось загрузить задачи');
+      setTasks([]);
+    } finally {
+      setIsLoading(false);
+    }
   }, [selectedDate]);
+
+  useEffect(() => {
+    fetchTasks();
+  }, [fetchTasks]);
 
   const getStatusColor = (status: string) => {
     switch (status) {

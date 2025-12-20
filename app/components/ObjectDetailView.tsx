@@ -18,6 +18,7 @@ interface ObjectData {
   year: number;
   material: string;
   criticality: string;
+  sourceFile?: string;
   inspections: Array<{
     id: number;
     date: string;
@@ -223,6 +224,19 @@ export function ObjectDetailView({ objectId }: { objectId: string }) {
               {getCriticalityLabel(object.criticality)}
             </span>
           </div>
+          {object.sourceFile && (
+            <div className="p-4 rounded-lg border" style={{ borderColor: 'var(--color-light-blue)', background: 'var(--color-white)' }}>
+              <div className="flex items-center gap-2 mb-2">
+                <FileText className="h-4 w-4" style={{ color: 'var(--color-blue)' }} />
+                <span className="text-sm" style={{ fontFamily: 'var(--font-geist)', color: 'var(--color-blue)' }}>
+                  Исходный файл
+                </span>
+              </div>
+              <div className="text-sm font-medium break-all" style={{ fontFamily: 'var(--font-geist)', color: 'var(--color-dark-blue)' }}>
+                {object.sourceFile}
+              </div>
+            </div>
+          )}
         </div>
       </BlurFade>
 

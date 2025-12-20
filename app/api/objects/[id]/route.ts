@@ -36,6 +36,12 @@ export async function GET(
     // Get first defect for location and pipeline info
     const firstDefect = defectsResponse.defects[0];
     const location = firstDefect.details?.location || { latitude: 0, longitude: 0, altitude: 0 };
+    
+    // Get source file from defects (use the most common one or first one)
+    const sourceFiles = defectsResponse.defects
+      .map(d => d.source_file)
+      .filter((f): f is string => f !== null && f !== undefined);
+    const sourceFile = sourceFiles.length > 0 ? sourceFiles[0] : undefined;
 
     // Calculate statistics
     const totalDefects = defectsResponse.defects.length;
@@ -97,6 +103,7 @@ export async function GET(
       year: 1985 + (segmentId % 30),
       material: '17Г1С',
       criticality,
+      sourceFile,
       inspections,
       defects,
       recommendations,

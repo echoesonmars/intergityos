@@ -38,6 +38,7 @@ export interface Defect {
   measurement_distance_m?: number;
   pipeline_id?: string;
   severity?: string;
+  source_file?: string;
   details?: DefectDetails;
 }
 
