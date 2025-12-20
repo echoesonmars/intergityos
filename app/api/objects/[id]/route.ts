@@ -1,17 +1,21 @@
 import { NextResponse } from 'next/server';
-import { defectsApi } from '@/lib/api';
 
 export const dynamic = 'force-dynamic';
+
+const BACKEND_URL = process.env.API_BASE_URL || 'http://127.0.0.1:8000';
 
 /**
  * GET /api/objects/[id] - Get object details by ID (segment number)
  */
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const segmentId = parseInt(params.id);
+    const { id } = await params;
+    const segmentId = parseInt(id);
+    
+    console.log(`[API] Fetching object with segment ID: ${segmentId}, backend: ${BACKEND_URL}`);
     
     if (isNaN(segmentId)) {
       return NextResponse.json(
@@ -20,21 +24,26 @@ export async function GET(
       );
     }
 
-    // Get defects for this segment
-    const defectsResponse = await defectsApi.getAll({
-      segment: segmentId,
-      limit: 1000,
-    });
+    // Fetch directly from backend
+    const url = `${BACKEND_URL}/defects?segment=${segmentId}&limit=1000`;
+    console.log(`[API] Fetching: ${url}`);
+    
+    const response = await fetch(url);
+    const defectsResponse = await response.json();
+    
+    console.log(`[API] Got ${defectsResponse.defects?.length || 0} defects for segment ${segmentId}`);
 
-    if (defectsResponse.defects.length === 0) {
+    if (!defectsResponse.defects || defectsResponse.defects.length === 0) {
       return NextResponse.json(
         { error: 'Object not found' },
         { status: 404 }
       );
     }
+    
+    const defectsData = defectsResponse.defects;
 
     // Get first defect for location and pipeline info
-    const firstDefect = defectsResponse.defects[0];
+    const firstDefect = defectsData[0];
     const location = firstDefect.details?.location || { latitude: 0, longitude: 0, altitude: 0 };
     
     // Get source file from defects (use the most common one or first one)
@@ -44,8 +53,8 @@ export async function GET(
     const sourceFile = sourceFiles.length > 0 ? sourceFiles[0] : undefined;
 
     // Calculate statistics
-    const totalDefects = defectsResponse.defects.length;
-    const criticalDefects = defectsResponse.defects.filter((d) => {
+    const totalDefects = defectsData.length;
+    const criticalDefects = defectsData.filter((d: { details?: { severity?: string }; severity?: string }) => {
       const severity = d.details?.severity || d.severity || '';
       return severity === 'критичный' || severity === 'critical' || severity === 'высокий' || severity === 'high';
     }).length;
@@ -59,7 +68,7 @@ export async function GET(
     }
 
     // Transform defects to inspections format
-    const inspections = defectsResponse.defects.map((defect, index) => ({
+    const inspections = defectsData.map((defect: { details?: { location?: { timestamp?: string }; type?: string; severity?: string; parameters?: { depth_percent?: number; length_mm?: number; width_mm?: number } } }, index: number) => ({
       id: index + 1,
       date: defect.details?.location?.timestamp?.split('T')[0] || new Date().toISOString().split('T')[0],
       method: getMethodFromDefectType(defect.details?.type || ''),
@@ -71,7 +80,7 @@ export async function GET(
     }));
 
     // Transform defects to defects format
-    const defects = defectsResponse.defects.map((defect, index) => ({
+    const defects = defectsData.map((defect: { details?: { location?: { timestamp?: string }; type?: string; severity?: string; parameters?: { depth_mm?: number; length_mm?: number; width_mm?: number } } }, index: number) => ({
       id: index + 1,
       date: defect.details?.location?.timestamp?.split('T')[0] || new Date().toISOString().split('T')[0],
       description: defect.details?.type || 'Дефект',

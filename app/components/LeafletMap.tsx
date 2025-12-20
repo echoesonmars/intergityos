@@ -81,9 +81,26 @@ interface LeafletMapProps {
   selectedCriticality?: string;
   height?: string;
   showLegend?: boolean;
+  dateFrom?: string;
+  dateTo?: string;
+  depthMin?: number;
+  depthMax?: number;
+  distanceMin?: number;
+  distanceMax?: number;
 }
 
-export default function LeafletMap({ selectedMethod: _selectedMethod = 'all', selectedCriticality = 'all', height = '600px', showLegend = true }: LeafletMapProps) {
+export default function LeafletMap({ 
+  selectedMethod: _selectedMethod = 'all', 
+  selectedCriticality = 'all', 
+  height = '600px', 
+  showLegend = true,
+  dateFrom,
+  dateTo,
+  depthMin,
+  depthMax,
+  distanceMin,
+  distanceMax
+}: LeafletMapProps) {
   // selectedMethod зарезервирован для будущей фильтрации по методам
   void _selectedMethod;
   const router = useRouter();
@@ -101,6 +118,26 @@ export default function LeafletMap({ selectedMethod: _selectedMethod = 'all', se
         if (_selectedMethod !== 'all') {
           params.append('method', _selectedMethod);
         }
+        // Date filters
+        if (dateFrom) {
+          params.append('date_from', dateFrom);
+        }
+        if (dateTo) {
+          params.append('date_to', dateTo);
+        }
+        // Parameter range filters
+        if (depthMin !== undefined) {
+          params.append('depth_min', depthMin.toString());
+        }
+        if (depthMax !== undefined) {
+          params.append('depth_max', depthMax.toString());
+        }
+        if (distanceMin !== undefined) {
+          params.append('distance_min', distanceMin.toString());
+        }
+        if (distanceMax !== undefined) {
+          params.append('distance_max', distanceMax.toString());
+        }
 
         const response = await fetch(`/api/map/defects?${params.toString()}`);
         if (response.ok) {
@@ -115,7 +152,7 @@ export default function LeafletMap({ selectedMethod: _selectedMethod = 'all', se
     };
 
     fetchDefects();
-  }, [selectedCriticality, _selectedMethod]);
+  }, [selectedCriticality, _selectedMethod, dateFrom, dateTo, depthMin, depthMax, distanceMin, distanceMax]);
 
   // Фильтрация объектов
   const filteredObjects = useMemo(() => {
